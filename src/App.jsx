@@ -11,7 +11,7 @@ export const GENRES = ["Contemporary","Lyrical","Ballet","Repertoire","Jazz","Ac
 export const AGE_GROUPS = [
   "Petite (6 & under)",
   "Mini (7–9)",
-  "Children (10–12) – Ballet/Rep point shoes optional",
+  "Children (10–12)",
   "Junior (13–15)",
   "Senior (16 & older)",
 ];
@@ -27,7 +27,7 @@ export function calcAge(dob) {
 export function calcAgeGroup(age) {
   if (age <= 6) return "Petite (6 & under)";
   if (age <= 9) return "Mini (7–9)";
-  if (age <= 12) return "Children (10–12) – Ballet/Rep point shoes optional";
+  if (age <= 12) return "Children (10–12)";
   if (age <= 15) return "Junior (13–15)";
   return "Senior (16 & older)";
 }
