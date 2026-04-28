@@ -402,7 +402,7 @@ function AddSoloModal({ dancer: initialDancer, dancers, session, onClose, onSave
         {dancer && <div style={{padding:"8px 12px",background:"#e8c54718",borderRadius:8,fontSize:12,color:"#e8c547"}}>
           Age group: {dancer.age_group}
           {dancer.age_group==="Children (10–12)" && (form.genre==="Ballet"||form.genre==="Repertoire") && 
-            <span style={{marginLeft:8,color:"#a78bfa"}}> · Point shoes optional</span>}
+            <span style={{marginLeft:8,color:"#a78bfa"}}> · Pointe shoes optional</span>}
         </div>}
         <div><label style={S.label}>Genre *</label>
           <select style={S.select} value={form.genre} onChange={e=>set("genre",e.target.value)}>
