@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { db, S, Spinner, Toast, AudioBars, GENRES, AGE_GROUPS, PRICING, calcAge, calcAgeGroup, membershipCode, groupType, groupFee } from "./App.jsx";
-import * as XLSX from "https://cdn.sheetjs.com/xlsx-0.20.0/package/xlsx.mjs";
+import * as XLSX from "xlsx";
 
 export default function StudioPortal({ session, onLogout, notify }) {
   const [tab, setTab] = useState("dancers");
