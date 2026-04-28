@@ -1,86 +1,23 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { createClient } from "@supabase/supabase-js";
 
-// ─── CONFIG ────────────────────────────────────────────────────────────────
+// ─── SUPABASE ────────────────────────────────────────────────────────────────
 const SUPABASE_URL = "https://xyezjpubmveizkzqbxue.supabase.co";
 const SUPABASE_KEY = "sb_publishable_lmRXMFg_FO5W0J8uHXnANA_Tk2SR8ed";
+export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// ─── CONSTANTS ───────────────────────────────────────────────────────────────
 export const GENRES = ["Contemporary","Lyrical","Ballet","Repertoire","Jazz","Acrobatics","Hip-Hop","Open"];
 export const AGE_GROUPS = [
-  { label: "Petite (6 & under)", max: 6 },
-  { label: "Mini (7–9)", min: 7, max: 9 },
-  { label: "Children (10–12) – Ballet/Rep point shoes optional", min: 10, max: 12 },
-  { label: "Junior (13–15)", min: 13, max: 15 },
-  { label: "Senior (16 & older)", min: 16 },
+  "Petite (6 & under)",
+  "Mini (7–9)",
+  "Children (10–12) – Ballet/Rep point shoes optional",
+  "Junior (13–15)",
+  "Senior (16 & older)",
 ];
 export const PRICING = { registration: 300, solo: 300, duo: 200, small_group: 180, large_group: 180 };
 
-// ─── SUPABASE CLIENT ────────────────────────────────────────────────────────
-export const db = {
-  headers() {
-    return {
-      "apikey": SUPABASE_KEY,
-      "Authorization": "Bearer " + SUPABASE_KEY,
-      "Content-Type": "application/json",
-      "Prefer": "return=representation"
-    };
-  },
-  async get(table, query = "") {
-    const url = new URL(`${SUPABASE_URL}/rest/v1/${table}`);
-    if (query) {
-      query.split("&").forEach(part => {
-        const [k, v] = part.split("=");
-        if (k && v) url.searchParams.append(k, decodeURIComponent(v));
-      });
-    }
-    url.searchParams.append("order", "created_at.asc");
-    const res = await fetch(url.toString(), { headers: this.headers() });
-    if (!res.ok) { const t = await res.text(); throw new Error(t); }
-    return res.json();
-  },
-  async insert(table, data) {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
-      method: "POST",
-      headers: this.headers(),
-      body: JSON.stringify(data)
-    });
-    if (!res.ok) { const t = await res.text(); throw new Error(t); }
-    return res.json();
-  },
-  async update(table, id, data) {
-    const url = new URL(`${SUPABASE_URL}/rest/v1/${table}`);
-    url.searchParams.append("id", "eq." + id);
-    const res = await fetch(url.toString(), {
-      method: "PATCH",
-      headers: this.headers(),
-      body: JSON.stringify(data)
-    });
-    if (!res.ok) { const t = await res.text(); throw new Error(t); }
-    return res.json();
-  },
-  async remove(table, id) {
-    const url = new URL(`${SUPABASE_URL}/rest/v1/${table}`);
-    url.searchParams.append("id", "eq." + id);
-    const res = await fetch(url.toString(), {
-      method: "DELETE",
-      headers: this.headers()
-    });
-    if (!res.ok) { const t = await res.text(); throw new Error(t); }
-    return true;
-  },
-  async uploadFile(path, file) {
-    const res = await fetch(`${SUPABASE_URL}/storage/v1/object/mp3s/${path}`, {
-      method: "POST",
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": file.type },
-      body: file
-    });
-    const json = await res.json();
-    if (json.error) throw new Error(json.error.message || json.error);
-    return json;
-  },
-  fileUrl(path) { return path ? `${SUPABASE_URL}/storage/v1/object/public/mp3s/${path}` : null; }
-};
-
-// ─── HELPERS ────────────────────────────────────────────────────────────────
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
 export function calcAge(dob) {
   const today = new Date(), birth = new Date(dob);
   let age = today.getFullYear() - birth.getFullYear();
@@ -109,7 +46,7 @@ export function groupFee(count) {
   return PRICING.small_group;
 }
 
-// ─── SHARED UI ──────────────────────────────────────────────────────────────
+// ─── SHARED UI ───────────────────────────────────────────────────────────────
 export function Spinner({ color = "#e8c547", size = 18 }) {
   return (
     <>
@@ -118,7 +55,6 @@ export function Spinner({ color = "#e8c547", size = 18 }) {
     </>
   );
 }
-
 export function Toast({ msg, color = "#1a6b3a" }) {
   return (
     <div style={{ position:"fixed", bottom:28, right:28, background:color, color:"#fff", padding:"13px 22px", borderRadius:10, fontFamily:"Georgia,serif", zIndex:9999, boxShadow:"0 8px 32px rgba(0,0,0,.5)", fontSize:14, maxWidth:340, lineHeight:1.5 }}>
@@ -126,7 +62,6 @@ export function Toast({ msg, color = "#1a6b3a" }) {
     </div>
   );
 }
-
 export function AudioBars({ playing }) {
   return (
     <>
@@ -139,7 +74,6 @@ export function AudioBars({ playing }) {
     </>
   );
 }
-
 export const S = {
   app: { minHeight:"100vh", background:"#0a0a0a", fontFamily:"Georgia,serif", color:"#f0ece0" },
   card: { background:"#141414", border:"1px solid #242424", borderRadius:16, padding:28 },
@@ -153,16 +87,18 @@ export const S = {
   disclaimer: { marginTop:24, padding:"12px 16px", background:"#1a1200", border:"1px solid #3a2e00", borderRadius:8, fontSize:12, color:"#a08c40", lineHeight:1.6 },
 };
 
-// ─── MAIN APP ────────────────────────────────────────────────────────────────
+// ─── IMPORTS ─────────────────────────────────────────────────────────────────
 import StudioRegister from "./StudioRegister.jsx";
 import StudioPortal from "./StudioPortal.jsx";
 import AdminDashboard from "./AdminDashboard.jsx";
 
+// ─── MAIN APP ────────────────────────────────────────────────────────────────
 export default function App() {
   const [portal, setPortal] = useState("home");
   const [studioSession, setStudioSession] = useState(null);
   const [stats, setStats] = useState({ studios:0, dancers:0, solos:0, groups:0 });
   const [notification, setNotification] = useState(null);
+  const [showLogin, setShowLogin] = useState(false);
 
   const notify = useCallback((msg, color="#1a6b3a") => {
     setNotification({ msg, color });
@@ -171,18 +107,26 @@ export default function App() {
 
   useEffect(() => {
     const saved = sessionStorage.getItem("studioSession");
-    if (saved) setStudioSession(JSON.parse(saved));
-    Promise.all([
-      db.get("studios","status=eq.approved&select=id"),
-      db.get("dancers","select=id"),
-      db.get("solo_entries","select=id"),
-      db.get("group_entries","select=id"),
-    ]).then(([st,da,so,gr]) => setStats({ studios:st.length, dancers:da.length, solos:so.length, groups:gr.length })).catch(()=>{});
+    if (saved) { try { setStudioSession(JSON.parse(saved)); } catch(e) {} }
+    loadStats();
   }, []);
+
+  const loadStats = async () => {
+    try {
+      const [{ count: s }, { count: d }, { count: so }, { count: g }] = await Promise.all([
+        supabase.from("studios").select("*", { count:"exact", head:true }).eq("status","approved"),
+        supabase.from("dancers").select("*", { count:"exact", head:true }),
+        supabase.from("solo_entries").select("*", { count:"exact", head:true }),
+        supabase.from("group_entries").select("*", { count:"exact", head:true }),
+      ]);
+      setStats({ studios: s||0, dancers: d||0, solos: so||0, groups: g||0 });
+    } catch(e) { console.error("Stats error:", e); }
+  };
 
   const loginStudio = (studio) => {
     setStudioSession(studio);
     sessionStorage.setItem("studioSession", JSON.stringify(studio));
+    setShowLogin(false);
     setPortal("studio");
   };
   const logoutStudio = () => {
@@ -195,11 +139,9 @@ export default function App() {
   if (portal === "studio") return <StudioPortal session={studioSession} onLogout={logoutStudio} notify={notify} />;
   if (portal === "admin") return <AdminDashboard onBack={() => setPortal("home")} notify={notify} />;
 
-  // HOME
   return (
     <div style={S.app}>
       <div style={{ maxWidth:980, margin:"0 auto", padding:"56px 24px" }}>
-        {/* Hero */}
         <div style={{ textAlign:"center", marginBottom:72 }}>
           <div style={{ fontSize:10, letterSpacing:"0.5em", color:"#e8c547", textTransform:"uppercase", marginBottom:24 }}>✦ Welcome to ✦</div>
           <h1 style={{ fontSize:"clamp(52px,10vw,100px)", fontWeight:"normal", margin:0, lineHeight:.9, letterSpacing:"-0.03em" }}>
@@ -208,17 +150,16 @@ export default function App() {
           <p style={{ color:"#444", marginTop:20, fontSize:15, letterSpacing:"0.08em", textTransform:"uppercase" }}>Dance Competition Management</p>
         </div>
 
-        {/* Portal cards */}
         <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))", gap:16, marginBottom:40 }}>
           {[
             { icon:"🏫", title:"Studio Registration", sub:"New studios — register your dance school to participate", key:"studio-register", color:"#a78bfa" },
-            { icon:"🎵", title:"Studio Portal", sub:"Registered studios — manage dancers, entries & music uploads", key:"studio-login", color:"#4ecdc4" },
+            { icon:"🎵", title:"Studio Portal", sub:"Registered studios — manage dancers, entries & music", key:"studio-login", color:"#4ecdc4" },
             { icon:"⚡", title:"Admin Dashboard", sub:"Organizers — approve studios, manage entries & exports", key:"admin", color:"#ff6b6b" },
           ].map(p => (
             <button key={p.key} onClick={() => {
               if (p.key === "studio-login") {
                 if (studioSession) setPortal("studio");
-                else setPortal("studio-login-modal");
+                else setShowLogin(true);
               } else setPortal(p.key);
             }}
               style={{ ...S.card, cursor:"pointer", textAlign:"left", border:"1px solid #242424", transition:"all .2s" }}
@@ -232,7 +173,6 @@ export default function App() {
           ))}
         </div>
 
-        {/* Stats */}
         <div style={{ ...S.card, display:"grid", gridTemplateColumns:"repeat(4,1fr)", padding:0, overflow:"hidden" }}>
           {[
             { label:"Active Studios", value:stats.studios, color:"#a78bfa" },
@@ -246,23 +186,16 @@ export default function App() {
             </div>
           ))}
         </div>
-
-        <div style={S.disclaimer}>
-          ⚠️ <strong>Please wait for your final invoice before making payment.</strong> All fees displayed throughout this system are estimates only.
-        </div>
+        <div style={S.disclaimer}>⚠️ <strong>Please wait for your final invoice before making payment.</strong> All fees displayed are estimates only.</div>
       </div>
 
-      {/* Studio login modal */}
-      {portal === "studio-login-modal" && (
-        <StudioLoginModal onClose={() => setPortal("home")} onLogin={loginStudio} notify={notify} />
-      )}
-
+      {showLogin && <LoginModal onClose={() => setShowLogin(false)} onLogin={loginStudio} notify={notify} />}
       {notification && <Toast msg={notification.msg} color={notification.color} />}
     </div>
   );
 }
 
-function StudioLoginModal({ onClose, onLogin, notify }) {
+function LoginModal({ onClose, onLogin, notify }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -273,42 +206,41 @@ function StudioLoginModal({ onClose, onLogin, notify }) {
     if (!email || !password) { notify("Please enter email and password","#c0392b"); return; }
     setLoading(true);
     try {
-      const studios = await db.get("studios", `studio_email=eq.${encodeURIComponent(email)}&status=eq.approved`);
-      if (!studios.length) { notify("Studio not found or not yet approved","#c0392b"); setLoading(false); return; }
-      const studio = studios[0];
-      if (studio.password_hash !== btoa(password)) { notify("Incorrect password","#c0392b"); setLoading(false); return; }
-      onLogin(studio);
-    } catch(e) { notify("Login error: "+e.message,"#c0392b"); }
+      const { data, error } = await supabase
+        .from("studios")
+        .select("*")
+        .eq("studio_email", email.trim().toLowerCase())
+        .eq("status", "approved")
+        .single();
+      if (error || !data) { notify("Studio not found or not yet approved by admin","#c0392b"); setLoading(false); return; }
+      const encoded = btoa(unescape(encodeURIComponent(password)));
+      if (data.password_hash !== encoded) { notify("Incorrect password","#c0392b"); setLoading(false); return; }
+      onLogin(data);
+    } catch(e) { notify("Login error: " + e.message,"#c0392b"); }
     setLoading(false);
   };
 
-  const handleReset = async () => {
-    if (!email) { notify("Enter your studio email first","#c0392b"); return; }
-    setResetSent(true);
-    notify("If that email is registered, a reset link has been sent ✓");
-  };
-
   return (
-    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,.85)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:1000, padding:24 }}>
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,.88)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:1000, padding:24 }}>
       <div style={{ ...S.card, width:"100%", maxWidth:420 }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:24 }}>
-          <div style={{ fontSize:18, color:"#4ecdc4" }}>{forgot ? "Reset Password" : "Studio Login"}</div>
+          <div style={{ fontSize:18, color:"#4ecdc4" }}>{forgot?"Reset Password":"Studio Login"}</div>
           <button onClick={onClose} style={{ background:"none", border:"none", color:"#555", fontSize:20, cursor:"pointer" }}>✕</button>
         </div>
         {resetSent ? (
           <div style={{ textAlign:"center", color:"#888", fontSize:14, lineHeight:1.7 }}>
-            Check your email for a reset link.<br />
-            <button onClick={() => { setForgot(false); setResetSent(false); }} style={{ ...S.ghost("#4ecdc4"), marginTop:16 }}>Back to Login</button>
+            Please contact the competition admin to reset your password.<br/>
+            <button onClick={()=>{setForgot(false);setResetSent(false);}} style={{ ...S.ghost("#4ecdc4"), marginTop:16 }}>← Back to Login</button>
           </div>
         ) : (
           <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
-            <div><label style={S.label}>Studio Email</label><input style={S.input} type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="studio@email.com" /></div>
+            <div><label style={S.label}>Studio Email</label><input style={S.input} type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="info@yourstudio.co.za" /></div>
             {!forgot && <div><label style={S.label}>Password</label><input style={S.input} type="password" value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleLogin()} placeholder="••••••••" /></div>}
-            <button style={S.btn("#4ecdc4")} onClick={forgot ? handleReset : handleLogin} disabled={loading}>
-              {loading ? <Spinner color="#0a0a0a" /> : forgot ? "Send Reset Link" : "Login →"}
+            <button style={S.btn("#4ecdc4")} onClick={forgot?()=>setResetSent(true):handleLogin} disabled={loading}>
+              {loading?<Spinner color="#0a0a0a"/>:forgot?"Send Reset Request":"Login →"}
             </button>
-            <button onClick={() => setForgot(!forgot)} style={{ background:"none", border:"none", color:"#555", fontSize:13, cursor:"pointer", fontFamily:"Georgia,serif" }}>
-              {forgot ? "← Back to login" : "Forgot password?"}
+            <button onClick={()=>setForgot(!forgot)} style={{ background:"none", border:"none", color:"#555", fontSize:13, cursor:"pointer", fontFamily:"Georgia,serif" }}>
+              {forgot?"← Back to login":"Forgot password?"}
             </button>
           </div>
         )}
