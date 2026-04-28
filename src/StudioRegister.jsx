@@ -1,6 +1,28 @@
 import { useState } from "react";
 import { supabase, S, Spinner } from "./App.jsx";
 
+// EmailJS config - fill in your IDs from emailjs.com
+const EMAILJS_SERVICE_ID = "YOUR_SERVICE_ID";
+const EMAILJS_TEMPLATE_STUDIO = "YOUR_TEMPLATE_ID";
+const EMAILJS_TEMPLATE_ADMIN = "YOUR_ADMIN_TEMPLATE_ID";
+const EMAILJS_PUBLIC_KEY = "YOUR_PUBLIC_KEY";
+const ADMIN_EMAILS = ["marcel@amberjade.co.za", "rochelle@amberjade.co.za"];
+
+async function sendEmail(templateId, params) {
+  try {
+    await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        service_id: EMAILJS_SERVICE_ID,
+        template_id: templateId,
+        user_id: EMAILJS_PUBLIC_KEY,
+        template_params: params
+      })
+    });
+  } catch(e) { console.log("Email error:", e); }
+}
+
 function generateCode(name) {
   const words = name.toUpperCase().replace(/[^A-Z0-9\s]/g,"").trim().split(/\s+/).filter(Boolean);
   const initials = words.map(w=>w[0]).join("").slice(0,4);
@@ -47,6 +69,28 @@ export default function StudioRegister({ onBack, onSuccess, notify }) {
         else notify("Error: " + error.message,"#c0392b");
       } else {
         setSubmitted(true);
+      // Email to studio
+      sendEmail(EMAILJS_TEMPLATE_STUDIO, {
+        to_email: form.studio_email,
+        to_name: form.studio_owner_name || form.studio_name,
+        studio_name: form.studio_name,
+        studio_code: finalCode,
+        studio_email: form.studio_email,
+        message: "Your studio registration has been submitted successfully. Once approved by admin you can log in using your studio email and the password you set during registration."
+      });
+      // Email to admins
+      for (const adminEmail of ADMIN_EMAILS) {
+        sendEmail(EMAILJS_TEMPLATE_ADMIN, {
+          to_email: adminEmail,
+          to_name: "Grande National Admin",
+          studio_name: form.studio_name,
+          studio_code: finalCode,
+          studio_email: form.studio_email,
+          studio_owner: form.studio_owner_name,
+          studio_contact: form.studio_contact_nr,
+          message: `New studio registration received from ${form.studio_name}. Please log into the admin dashboard to review and approve.`
+        });
+      }
       }
     } catch(e) { notify("Error: "+e.message,"#c0392b"); }
     setLoading(false);
