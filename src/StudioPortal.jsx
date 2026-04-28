@@ -399,7 +399,7 @@ function AddSoloModal({ dancer: initialDancer, dancers, session, onClose, onSave
             {dancers.map(d=><option key={d.id} value={d.id}>{d.first_name} {d.last_name}</option>)}
           </select>
         </div>
-        {dancer && <div style={{padding:"8px 12px",background:"#e8c54718",borderRadius:8,fontSize:12,color:"#e8c547"}}>Age group: {dancer.age_group}</div>}
+        {dancer && <div style={{padding:"8px 12px",background:"#e8c54718",borderRadius:8,fontSize:12,color:"#e8c547"}}>Age group: {dancer.age_group.replace(" – Ballet/Rep point shoes optional","").replace(" – Ballet/Rep Pointe shoes optional","")}</div>}
         <div><label style={S.label}>Genre *</label>
           <select style={S.select} value={form.genre} onChange={e=>set("genre",e.target.value)}>
             {GENRES.map(g=><option key={g}>{g}</option>)}
