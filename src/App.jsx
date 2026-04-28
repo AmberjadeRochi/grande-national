@@ -16,37 +16,55 @@ export const PRICING = { registration: 300, solo: 300, duo: 200, small_group: 18
 
 // ─── SUPABASE CLIENT ────────────────────────────────────────────────────────
 export const db = {
+  headers() {
+    return {
+      "apikey": SUPABASE_KEY,
+      "Authorization": "Bearer " + SUPABASE_KEY,
+      "Content-Type": "application/json",
+      "Prefer": "return=representation"
+    };
+  },
   async get(table, query = "") {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query ? query + "&" : ""}order=created_at.asc`, {
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-    });
-    if (!res.ok) throw new Error(await res.text());
+    const url = new URL(`${SUPABASE_URL}/rest/v1/${table}`);
+    if (query) {
+      query.split("&").forEach(part => {
+        const [k, v] = part.split("=");
+        if (k && v) url.searchParams.append(k, decodeURIComponent(v));
+      });
+    }
+    url.searchParams.append("order", "created_at.asc");
+    const res = await fetch(url.toString(), { headers: this.headers() });
+    if (!res.ok) { const t = await res.text(); throw new Error(t); }
     return res.json();
   },
   async insert(table, data) {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
       method: "POST",
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json", Prefer: "return=representation" },
+      headers: this.headers(),
       body: JSON.stringify(data)
     });
-    if (!res.ok) throw new Error(await res.text());
+    if (!res.ok) { const t = await res.text(); throw new Error(t); }
     return res.json();
   },
   async update(table, id, data) {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
+    const url = new URL(`${SUPABASE_URL}/rest/v1/${table}`);
+    url.searchParams.append("id", "eq." + id);
+    const res = await fetch(url.toString(), {
       method: "PATCH",
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json", Prefer: "return=representation" },
+      headers: this.headers(),
       body: JSON.stringify(data)
     });
-    if (!res.ok) throw new Error(await res.text());
+    if (!res.ok) { const t = await res.text(); throw new Error(t); }
     return res.json();
   },
   async remove(table, id) {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
+    const url = new URL(`${SUPABASE_URL}/rest/v1/${table}`);
+    url.searchParams.append("id", "eq." + id);
+    const res = await fetch(url.toString(), {
       method: "DELETE",
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+      headers: this.headers()
     });
-    if (!res.ok) throw new Error(await res.text());
+    if (!res.ok) { const t = await res.text(); throw new Error(t); }
     return true;
   },
   async uploadFile(path, file) {
