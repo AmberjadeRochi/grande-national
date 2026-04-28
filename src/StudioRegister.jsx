@@ -65,7 +65,7 @@ export default function StudioRegister({ onBack, onSuccess, notify }) {
         <div style={S.card}>
           {step === 1 && (
             <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
-              <div><label style={S.label}>Studio Name *</label><input style={S.input} value={form.studio_name} onChange={e=>{set("studio_name",e.target.value); if(!form.studio_code) set("studio_code",generateCode(e.target.value));}} placeholder="Leap for Joy Dance Studio" /></div>
+              <div><label style={S.label}>Studio Name *</label><input style={S.input} value={form.studio_name} onChange={e=>{set("studio_name",e.target.value); if(!form.studio_code) set("studio_code",generateCode(e.target.value));}} placeholder="e.g. Sunshine Dance Academy" /></div>
               <div>
                 <label style={S.label}>Studio Code * <span style={{color:"#444",textTransform:"none",letterSpacing:0}}>(auto-generated, can edit)</span></label>
                 <input style={S.input} value={form.studio_code} onChange={e=>set("studio_code",e.target.value.toUpperCase())} placeholder="LFJ-123" />
@@ -80,7 +80,7 @@ export default function StudioRegister({ onBack, onSuccess, notify }) {
 
           {step === 2 && (
             <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
-              <div><label style={S.label}>Studio Owner / Principal Name *</label><input style={S.input} value={form.studio_owner_name} onChange={e=>set("studio_owner_name",e.target.value)} placeholder="Jane Smith" /></div>
+              <div><label style={S.label}>Studio Owner / Principal Name *</label><input style={S.input} value={form.studio_owner_name} onChange={e=>set("studio_owner_name",e.target.value)} placeholder="Owner Full Name" /></div>
               <div><label style={S.label}>Owner Email Address</label><input style={S.input} type="email" value={form.studio_owner_email} onChange={e=>set("studio_owner_email",e.target.value)} placeholder="owner@email.com" /></div>
               <div><label style={S.label}>Owner Contact Number</label><input style={S.input} value={form.studio_owner_contact_nr} onChange={e=>set("studio_owner_contact_nr",e.target.value)} placeholder="082 000 0000" /></div>
               <div style={{ display:"flex", gap:10 }}>
