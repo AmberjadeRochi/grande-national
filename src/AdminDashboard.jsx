@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { db, S, Spinner, Toast, AudioBars, GENRES, PRICING } from "./App.jsx";
-import * as XLSX from "https://cdn.sheetjs.com/xlsx-0.20.0/package/xlsx.mjs";
+import * as XLSX from "xlsx";
 
 const ADMIN_PASSWORD = "ROSEROCK@2532str!101";
 
