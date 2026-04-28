@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { db, S, Spinner, Toast, AudioBars, GENRES, PRICING } from "./App.jsx";
 import * as XLSX from "https://cdn.sheetjs.com/xlsx-0.20.0/package/xlsx.mjs";
 
-const ADMIN_PASSWORD = "GrandeNational2025!";
+const ADMIN_PASSWORD = "ROSEROCK@2532str!101";
 
 export default function AdminDashboard({ onBack, notify }) {
   const [authed, setAuthed] = useState(false);
@@ -29,7 +29,7 @@ export default function AdminDashboard({ onBack, notify }) {
         db.get("group_entries"),
         db.get("group_members"),
       ]);
-      setStudios(st); setDancers(da); setSolos(so); setGroups(gr); setGroupMembers(gm);
+      setStudios(Array.isArray(st)?st:[]); setDancers(Array.isArray(da)?da:[]); setSolos(Array.isArray(so)?so:[]); setGroups(Array.isArray(gr)?gr:[]); setGroupMembers(Array.isArray(gm)?gm:[]);
     } catch(e) { notify("Load error: " + e.message, "#c0392b"); }
     setLoading(false);
   };
