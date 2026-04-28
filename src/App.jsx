@@ -17,7 +17,7 @@ export const PRICING = { registration: 300, solo: 300, duo: 200, small_group: 18
 // ─── SUPABASE CLIENT ────────────────────────────────────────────────────────
 export const db = {
   async get(table, query = "") {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}${query ? "?" + query : ""}${query ? "&" : "?"}order=created_at.asc`, {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query ? query + "&" : ""}order=created_at.asc`, {
       headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
     });
     if (!res.ok) throw new Error(await res.text());
