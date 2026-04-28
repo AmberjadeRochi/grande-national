@@ -399,11 +399,7 @@ function AddSoloModal({ dancer: initialDancer, dancers, session, onClose, onSave
             {dancers.map(d=><option key={d.id} value={d.id}>{d.first_name} {d.last_name}</option>)}
           </select>
         </div>
-        {dancer && <div style={{padding:"8px 12px",background:"#e8c54718",borderRadius:8,fontSize:12,color:"#e8c547"}}>
-          Age group: {dancer.age_group}
-          {dancer.age_group==="Children (10–12)" && (form.genre==="Ballet"||form.genre==="Repertoire") && 
-            <span style={{marginLeft:8,color:"#a78bfa"}}> · Pointe shoes optional</span>}
-        </div>}
+        {dancer && <div style={{padding:"8px 12px",background:"#e8c54718",borderRadius:8,fontSize:12,color:"#e8c547"}}>Age group: {dancer.age_group}</div>}
         <div><label style={S.label}>Genre *</label>
           <select style={S.select} value={form.genre} onChange={e=>set("genre",e.target.value)}>
             {GENRES.map(g=><option key={g}>{g}</option>)}
@@ -417,7 +413,13 @@ function AddSoloModal({ dancer: initialDancer, dancers, session, onClose, onSave
             {form.fileName?<div style={{color:"#e8c547"}}>🎵 {form.fileName}</div>:<div style={{color:"#444",fontSize:13}}>📁 Click to select music file (MP3, WAV, M4A)</div>}
           </div>
         </div>
-        <div style={{padding:"8px 12px",background:"#1a1200",borderRadius:8,fontSize:12,color:"#a08c40"}}>Fee: R{PRICING.solo} per solo entry</div>
+        <div style={{padding:"12px 14px",background:"#1a1200",border:"1px solid #3a2e00",borderRadius:8,fontSize:12,color:"#a08c40",lineHeight:1.8}}>
+          <div>Fee: <strong>R{PRICING.solo}</strong> per solo entry</div>
+          {dancer && (form.genre==="Ballet"||form.genre==="Repertoire") && dancer.age_group==="Children (10–12)" && (
+            <div style={{marginTop:4,color:"#a78bfa"}}>🩰 Ages 10–12 Ballet/Repertoire — Pointe shoes optional</div>
+          )}
+          <div style={{marginTop:4,fontSize:11,color:"#666"}}>*Please wait for final invoice before making payment</div>
+        </div>
         <button style={S.btn("#e8c547")} onClick={save} disabled={loading}>{loading?<Spinner color="#0a0a0a"/>:"Add Solo Entry"}</button>
       </div>
     </Modal>
@@ -519,7 +521,8 @@ function AddGroupModal({ dancers, session, onClose, onSave, notify }) {
           </div>
           <div><label style={S.label}>Age Group *</label>
             <select style={S.select} value={form.age_group} onChange={e=>set("age_group",e.target.value)}>
-              {AGE_GROUPS.map(ag=><option key={ag.label}>{ag.label}</option>)}
+              <option value="">Select age group...</option>
+              {AGE_GROUPS.map(ag=><option key={ag} value={ag}>{ag}</option>)}
             </select>
           </div>
         </div>
@@ -594,7 +597,7 @@ function EditGroupModal({ group, dancers, groupMembers, onClose, onSave, notify 
         <div><label style={S.label}>Group Name</label><input style={S.input} value={form.group_name} onChange={e=>set("group_name",e.target.value)} /></div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
           <div><label style={S.label}>Genre</label><select style={S.select} value={form.genre} onChange={e=>set("genre",e.target.value)}>{GENRES.map(g=><option key={g}>{g}</option>)}</select></div>
-          <div><label style={S.label}>Age Group</label><select style={S.select} value={form.age_group} onChange={e=>set("age_group",e.target.value)}>{AGE_GROUPS.map(ag=><option key={ag.label}>{ag.label}</option>)}</select></div>
+          <div><label style={S.label}>Age Group</label><select style={S.select} value={form.age_group} onChange={e=>set("age_group",e.target.value)}>{AGE_GROUPS.map(ag=><option key={ag} value={ag}>{ag}</option>)}</select></div>
         </div>
         <div><label style={S.label}>Song Title</label><input style={S.input} value={form.song_title} onChange={e=>set("song_title",e.target.value)} /></div>
         <div>
