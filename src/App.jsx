@@ -1,523 +1,298 @@
-import { useState, useEffect, useRef } from "react";
-import { db, S, Spinner, Toast, AudioBars, GENRES, PRICING } from "./App.jsx";
-import * as XLSX from "https://cdn.sheetjs.com/xlsx-0.20.0/package/xlsx.mjs";
+import { useState, useRef, useEffect, useCallback } from "react";
 
-const ADMIN_PASSWORD = "GrandeNational2025!";
+// ─── CONFIG ────────────────────────────────────────────────────────────────
+const SUPABASE_URL = "https://xyezjpubmveizkzqbxue.supabase.co";
+const SUPABASE_KEY = "sb_publishable_lmRXMFg_FO5W0J8uHXnANA_Tk2SR8ed";
 
-export default function AdminDashboard({ onBack, notify }) {
-  const [authed, setAuthed] = useState(false);
-  const [pw, setPw] = useState("");
-  const [tab, setTab] = useState("studios");
-  const [studios, setStudios] = useState([]);
-  const [dancers, setDancers] = useState([]);
-  const [solos, setSolos] = useState([]);
-  const [groups, setGroups] = useState([]);
-  const [groupMembers, setGroupMembers] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [playingUrl, setPlayingUrl] = useState(null);
-  const [filterStudio, setFilterStudio] = useState("all");
-  const [filterGenre, setFilterGenre] = useState("all");
-  const audioRef = useRef(null);
+export const GENRES = ["Contemporary","Lyrical","Ballet","Repertoire","Jazz","Acrobatics","Hip-Hop","Open"];
+export const AGE_GROUPS = [
+  { label: "Petite (6 & under)", max: 6 },
+  { label: "Mini (7–9)", min: 7, max: 9 },
+  { label: "Children (10–12) – Ballet/Rep point shoes optional", min: 10, max: 12 },
+  { label: "Junior (13–15)", min: 13, max: 15 },
+  { label: "Senior (16 & older)", min: 16 },
+];
+export const PRICING = { registration: 300, solo: 300, duo: 200, small_group: 180, large_group: 180 };
 
-  const load = async () => {
-    setLoading(true);
-    try {
-      const [st, da, so, gr, gm] = await Promise.all([
-        db.get("studios"),
-        db.get("dancers"),
-        db.get("solo_entries"),
-        db.get("group_entries"),
-        db.get("group_members"),
-      ]);
-      setStudios(st); setDancers(da); setSolos(so); setGroups(gr); setGroupMembers(gm);
-    } catch(e) { notify("Load error: " + e.message, "#c0392b"); }
-    setLoading(false);
-  };
-
-  useEffect(() => { if (authed) load(); }, [authed]);
-
-  useEffect(() => {
-    if (!audioRef.current) return;
-    if (playingUrl) { audioRef.current.src = playingUrl; audioRef.current.play().catch(() => {}); }
-    else { audioRef.current.pause(); audioRef.current.src = ""; }
-  }, [playingUrl]);
-
-  const approveStudio = async (studio) => {
-    await db.update("studios", studio.id, { status: "approved" });
-    setStudios(prev => prev.map(s => s.id === studio.id ? { ...s, status: "approved" } : s));
-    notify(`✓ ${studio.studio_name} approved!`);
-  };
-
-  const rejectStudio = async (studio) => {
-    if (!confirm(`Reject ${studio.studio_name}?`)) return;
-    await db.update("studios", studio.id, { status: "rejected" });
-    setStudios(prev => prev.map(s => s.id === studio.id ? { ...s, status: "rejected" } : s));
-    notify(`${studio.studio_name} rejected`, "#c0392b");
-  };
-
-  // ── EXPORTS ──────────────────────────────────────────────────────
-  const exportMasterCSV = () => {
-    const wb = XLSX.utils.book_new();
-
-    // Sheet 1: All dancers
-    const dancerRows = dancers.map(d => ({
-      "Membership Code": d.membership_code,
-      "First Name": d.first_name,
-      "Last Name": d.last_name,
-      "DOB": d.date_of_birth,
-      "Age": d.age,
-      "Age Group": d.age_group,
-      "Gender": d.gender,
-      "Studio": d.studio_name,
-      "Reg Fee": d.registration_fee,
-    }));
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dancerRows), "Dancers");
-
-    // Sheet 2: All solos
-    const soloRows = solos.map(s => ({
-      "Dancer Name": s.dancer_name,
-      "Membership Code": s.membership_code,
-      "Studio": s.studio_name,
-      "Genre": s.genre,
-      "Song Title": s.song_title,
-      "Age Group": s.age_group,
-      "Fee": s.fee,
-      "File Name": s.file_name,
-    }));
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(soloRows), "Solos");
-
-    // Sheet 3: All groups
-    const groupRows = groups.map(g => ({
-      "Group Name": g.group_name,
-      "Type": g.group_type,
-      "Studio": g.studio_name,
-      "Genre": g.genre,
-      "Song Title": g.song_title,
-      "Age Group": g.age_group,
-      "Members": g.member_count,
-      "Fee Per Person": g.fee_per_person,
-      "Total Fee": g.total_fee,
-      "File Name": g.file_name,
-      "Member Names": groupMembers.filter(m => m.group_entry_id === g.id).map(m => m.dancer_name).join(", "),
-    }));
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(groupRows), "Groups");
-
-    XLSX.writeFile(wb, "GrandeNational_Master.xlsx");
-    notify("✓ Master export downloaded!");
-  };
-
-  const exportStudioInvoice = (studio) => {
-    const wb = XLSX.utils.book_new();
-    const stDancers = dancers.filter(d => d.studio_code === studio.studio_code);
-    const stSolos = solos.filter(s => s.studio_code === studio.studio_code);
-    const stGroups = groups.filter(g => g.studio_code === studio.studio_code);
-
-    // Invoice summary sheet
-    const regFees = stDancers.length * PRICING.registration;
-    const soloFees = stSolos.length * PRICING.solo;
-    const groupFees = stGroups.reduce((a, g) => a + g.total_fee, 0);
-    const total = regFees + soloFees + groupFees;
-
-    const summaryRows = [
-      { "Item": "Registration Fees", "Qty": stDancers.length, "Rate": `R${PRICING.registration}`, "Total": `R${regFees}` },
-      { "Item": "Solo Entries", "Qty": stSolos.length, "Rate": `R${PRICING.solo}`, "Total": `R${soloFees}` },
-      { "Item": "Group/Duo Entries (total)", "Qty": stGroups.length, "Rate": "varies", "Total": `R${groupFees}` },
-      { "Item": "ESTIMATED TOTAL", "Qty": "", "Rate": "", "Total": `R${total}` },
-      { "Item": "⚠️ Please wait for final invoice before payment", "Qty": "", "Rate": "", "Total": "" },
-    ];
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summaryRows), "Invoice Summary");
-
-    // Dancers sheet
-    const dancerRows = stDancers.map(d => {
-      const dSolos = stSolos.filter(s => s.dancer_id === d.id);
-      const dGroups = groupMembers.filter(m => m.dancer_id === d.id);
-      const soloTotal = dSolos.length * PRICING.solo;
-      const groupTotal = stGroups.filter(g => dGroups.some(m => m.group_entry_id === g.id)).reduce((a, g) => a + g.fee_per_person, 0);
-      return {
-        "Name": `${d.first_name} ${d.last_name}`,
-        "Membership Code": d.membership_code,
-        "DOB": d.date_of_birth,
-        "Age": d.age,
-        "Age Group": d.age_group,
-        "Gender": d.gender,
-        "Reg Fee": `R${d.registration_fee}`,
-        "Solo Entries": dSolos.length,
-        "Solo Fees": `R${soloTotal}`,
-        "Group Entries": dGroups.length,
-        "Group Fees (approx)": `R${groupTotal}`,
-        "Dancer Total": `R${d.registration_fee + soloTotal + groupTotal}`,
-      };
+// ─── SUPABASE CLIENT ────────────────────────────────────────────────────────
+export const db = {
+  async get(table, query = "") {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}&order=created_at.asc`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
     });
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dancerRows), "Dancers & Costs");
-
-    // Solos sheet
-    const soloRows = stSolos.map(s => ({
-      "Dancer": s.dancer_name,
-      "Genre": s.genre,
-      "Song Title": s.song_title,
-      "Age Group": s.age_group,
-      "Fee": `R${s.fee}`,
-      "File": s.file_name,
-    }));
-    if (soloRows.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(soloRows), "Solos");
-
-    // Groups sheet
-    const groupRows = stGroups.map(g => ({
-      "Group Name": g.group_name,
-      "Type": g.group_type,
-      "Genre": g.genre,
-      "Song Title": g.song_title,
-      "Age Group": g.age_group,
-      "Members": g.member_count,
-      "Fee pp": `R${g.fee_per_person}`,
-      "Total": `R${g.total_fee}`,
-      "Member Names": groupMembers.filter(m => m.group_entry_id === g.id).map(m => m.dancer_name).join(", "),
-      "File": g.file_name,
-    }));
-    if (groupRows.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(groupRows), "Groups");
-
-    XLSX.writeFile(wb, `GrandeNational_${studio.studio_code}_Invoice.xlsx`);
-    notify(`✓ Invoice exported for ${studio.studio_name}!`);
-  };
-
-  const exportRunningOrder = () => {
-    const wb = XLSX.utils.book_new();
-    GENRES.forEach(genre => {
-      const genreSolos = solos.filter(s => s.genre === genre);
-      const genreGroups = groups.filter(g => g.genre === genre);
-      if (!genreSolos.length && !genreGroups.length) return;
-      const rows = [];
-      if (genreSolos.length) {
-        rows.push({ "Type": "--- SOLOS ---", "Name": "", "Studio": "", "Song": "", "Age Group": "", "File": "" });
-        genreSolos.forEach(s => rows.push({ "Type": "Solo", "Name": s.dancer_name, "Studio": s.studio_name, "Song": s.song_title, "Age Group": s.age_group, "File": s.file_name }));
-      }
-      if (genreGroups.length) {
-        rows.push({ "Type": "--- GROUPS/DUOS ---", "Name": "", "Studio": "", "Song": "", "Age Group": "", "File": "" });
-        genreGroups.forEach(g => rows.push({ "Type": g.group_type, "Name": g.group_name, "Studio": g.studio_name, "Song": g.song_title, "Age Group": g.age_group, "File": g.file_name }));
-      }
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), genre.slice(0, 31));
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+  async insert(table, data) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+      method: "POST",
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json", Prefer: "return=representation" },
+      body: JSON.stringify(data)
     });
-    XLSX.writeFile(wb, "GrandeNational_RunningOrder.xlsx");
-    notify("✓ Running order exported!");
-  };
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+  async update(table, id, data) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
+      method: "PATCH",
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json", Prefer: "return=representation" },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+  async remove(table, id) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
+      method: "DELETE",
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return true;
+  },
+  async uploadFile(path, file) {
+    const res = await fetch(`${SUPABASE_URL}/storage/v1/object/mp3s/${path}`, {
+      method: "POST",
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": file.type },
+      body: file
+    });
+    const json = await res.json();
+    if (json.error) throw new Error(json.error.message || json.error);
+    return json;
+  },
+  fileUrl(path) { return path ? `${SUPABASE_URL}/storage/v1/object/public/mp3s/${path}` : null; }
+};
 
-  // ── LOGIN SCREEN ──
-  if (!authed) return (
-    <div style={S.app}>
-      <div style={{ maxWidth:400, margin:"0 auto", padding:"120px 24px" }}>
-        <button style={S.back} onClick={onBack}>← Back</button>
-        <div style={{ fontSize:10, letterSpacing:"0.4em", color:"#ff6b6b", textTransform:"uppercase", marginBottom:10 }}>Restricted Area</div>
-        <h2 style={{ fontSize:28, fontWeight:"normal", margin:"0 0 28px" }}>Admin Login</h2>
-        <div style={S.card}>
-          <label style={S.label}>Admin Password</label>
-          <input style={S.input} type="password" value={pw} onChange={e => setPw(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && (pw === ADMIN_PASSWORD ? setAuthed(true) : notify("Incorrect password", "#c0392b"))}
-            placeholder="••••••••" />
-          <button style={{ ...S.btn("#ff6b6b"), marginTop:16, width:"100%" }}
-            onClick={() => pw === ADMIN_PASSWORD ? setAuthed(true) : notify("Incorrect password", "#c0392b")}>
-            Enter Dashboard →
-          </button>
-          <div style={{ fontSize:11, color:"#333", marginTop:16, textAlign:"center" }}>
-            Default password: GrandeNational2025!<br/>Change this in AdminDashboard.jsx before launch
-          </div>
-        </div>
-      </div>
+// ─── HELPERS ────────────────────────────────────────────────────────────────
+export function calcAge(dob) {
+  const today = new Date(), birth = new Date(dob);
+  let age = today.getFullYear() - birth.getFullYear();
+  if (today.getMonth() < birth.getMonth() || (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())) age--;
+  return age;
+}
+export function calcAgeGroup(age) {
+  if (age <= 6) return "Petite (6 & under)";
+  if (age <= 9) return "Mini (7–9)";
+  if (age <= 12) return "Children (10–12) – Ballet/Rep point shoes optional";
+  if (age <= 15) return "Junior (13–15)";
+  return "Senior (16 & older)";
+}
+export function membershipCode(studioCode, firstName, lastName, dob) {
+  const initials = `${firstName[0]}${lastName[0]}`.toUpperCase();
+  const dobStr = dob.replace(/-/g, "");
+  return `${studioCode}-${initials}-${dobStr}`;
+}
+export function groupType(count) {
+  if (count === 2) return "Duo";
+  if (count <= 7) return "Small Group";
+  return "Large Group";
+}
+export function groupFee(count) {
+  if (count === 2) return PRICING.duo;
+  return PRICING.small_group;
+}
+
+// ─── SHARED UI ──────────────────────────────────────────────────────────────
+export function Spinner({ color = "#e8c547", size = 18 }) {
+  return (
+    <>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+      <span style={{ display:"inline-block", width:size, height:size, border:`2px solid ${color}30`, borderTop:`2px solid ${color}`, borderRadius:"50%", animation:"spin .7s linear infinite", flexShrink:0 }} />
+    </>
+  );
+}
+
+export function Toast({ msg, color = "#1a6b3a" }) {
+  return (
+    <div style={{ position:"fixed", bottom:28, right:28, background:color, color:"#fff", padding:"13px 22px", borderRadius:10, fontFamily:"Georgia,serif", zIndex:9999, boxShadow:"0 8px 32px rgba(0,0,0,.5)", fontSize:14, maxWidth:340, lineHeight:1.5 }}>
+      {msg}
     </div>
   );
+}
 
-  const filteredSolos = solos.filter(s =>
-    (filterStudio === "all" || s.studio_code === filterStudio) &&
-    (filterGenre === "all" || s.genre === filterGenre)
+export function AudioBars({ playing }) {
+  return (
+    <>
+      <style>{`@keyframes bar{to{height:3px}}`}</style>
+      <span style={{ display:"inline-flex", alignItems:"flex-end", gap:2, height:14, marginLeft:6 }}>
+        {[10,16,8,14].map((h,i)=>(
+          <span key={i} style={{ display:"block", width:3, borderRadius:2, background:"#e8c547", height:playing?`${h}px`:"3px", animation:playing?`bar .6s ease-in-out ${i*.12}s infinite alternate`:"none", transition:"height .3s" }} />
+        ))}
+      </span>
+    </>
   );
-  const filteredGroups = groups.filter(g =>
-    (filterStudio === "all" || g.studio_code === filterStudio) &&
-    (filterGenre === "all" || g.genre === filterGenre)
-  );
+}
 
-  const totalReg = dancers.length * PRICING.registration;
-  const totalSolos = solos.length * PRICING.solo;
-  const totalGroups = groups.reduce((a, g) => a + g.total_fee, 0);
-  const grandTotal = totalReg + totalSolos + totalGroups;
+export const S = {
+  app: { minHeight:"100vh", background:"#0a0a0a", fontFamily:"Georgia,serif", color:"#f0ece0" },
+  card: { background:"#141414", border:"1px solid #242424", borderRadius:16, padding:28 },
+  input: { width:"100%", background:"#1c1c1c", border:"1px solid #2e2e2e", borderRadius:8, padding:"11px 14px", color:"#f0ece0", fontFamily:"Georgia,serif", fontSize:15, outline:"none", boxSizing:"border-box" },
+  select: { width:"100%", background:"#1c1c1c", border:"1px solid #2e2e2e", borderRadius:8, padding:"11px 14px", color:"#f0ece0", fontFamily:"Georgia,serif", fontSize:15, outline:"none", boxSizing:"border-box" },
+  btn: (color="#e8c547") => ({ background:color, color:color==="#e8c547"?"#0a0a0a":"#fff", border:"none", borderRadius:8, padding:"12px 28px", fontFamily:"Georgia,serif", fontSize:15, fontWeight:"bold", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }),
+  ghost: (color="#e8c547") => ({ background:"transparent", color, border:`1px solid ${color}`, borderRadius:8, padding:"10px 20px", fontFamily:"Georgia,serif", fontSize:14, cursor:"pointer" }),
+  label: { display:"block", fontSize:11, letterSpacing:"0.12em", textTransform:"uppercase", color:"#666", marginBottom:6 },
+  tag: (c) => ({ background:`${c}22`, color:c, borderRadius:20, padding:"3px 11px", fontSize:12, fontWeight:"bold", whiteSpace:"nowrap", display:"inline-block" }),
+  back: { background:"transparent", color:"#666", border:"1px solid #222", borderRadius:8, padding:"8px 18px", fontFamily:"Georgia,serif", fontSize:13, cursor:"pointer", marginBottom:28 },
+  disclaimer: { marginTop:24, padding:"12px 16px", background:"#1a1200", border:"1px solid #3a2e00", borderRadius:8, fontSize:12, color:"#a08c40", lineHeight:1.6 },
+};
 
+// ─── MAIN APP ────────────────────────────────────────────────────────────────
+import StudioRegister from "./StudioRegister.jsx";
+import StudioPortal from "./StudioPortal.jsx";
+import AdminDashboard from "./AdminDashboard.jsx";
+
+export default function App() {
+  const [portal, setPortal] = useState("home");
+  const [studioSession, setStudioSession] = useState(null);
+  const [stats, setStats] = useState({ studios:0, dancers:0, solos:0, groups:0 });
+  const [notification, setNotification] = useState(null);
+
+  const notify = useCallback((msg, color="#1a6b3a") => {
+    setNotification({ msg, color });
+    setTimeout(() => setNotification(null), 4000);
+  }, []);
+
+  useEffect(() => {
+    const saved = sessionStorage.getItem("studioSession");
+    if (saved) setStudioSession(JSON.parse(saved));
+    Promise.all([
+      db.get("studios","status=eq.approved&select=id"),
+      db.get("dancers","select=id"),
+      db.get("solo_entries","select=id"),
+      db.get("group_entries","select=id"),
+    ]).then(([st,da,so,gr]) => setStats({ studios:st.length, dancers:da.length, solos:so.length, groups:gr.length })).catch(()=>{});
+  }, []);
+
+  const loginStudio = (studio) => {
+    setStudioSession(studio);
+    sessionStorage.setItem("studioSession", JSON.stringify(studio));
+    setPortal("studio");
+  };
+  const logoutStudio = () => {
+    setStudioSession(null);
+    sessionStorage.removeItem("studioSession");
+    setPortal("home");
+  };
+
+  if (portal === "studio-register") return <StudioRegister onBack={() => setPortal("home")} onSuccess={() => { notify("✓ Registration submitted! Admin will approve your studio shortly."); setPortal("home"); }} notify={notify} />;
+  if (portal === "studio") return <StudioPortal session={studioSession} onLogout={logoutStudio} notify={notify} />;
+  if (portal === "admin") return <AdminDashboard onBack={() => setPortal("home")} notify={notify} />;
+
+  // HOME
   return (
     <div style={S.app}>
-      <audio ref={audioRef} onEnded={() => setPlayingUrl(null)} />
-
-      {/* Header */}
-      <div style={{ background:"#0f0f0f", borderBottom:"1px solid #1e1e1e", padding:"16px 24px", display:"flex", alignItems:"center", justifyContent:"space-between", position:"sticky", top:0, zIndex:100 }}>
-        <div>
-          <div style={{ fontSize:10, letterSpacing:"0.3em", color:"#ff6b6b", textTransform:"uppercase" }}>Admin Dashboard</div>
-          <div style={{ fontSize:18, marginTop:2 }}>Grande National HQ</div>
+      <div style={{ maxWidth:980, margin:"0 auto", padding:"56px 24px" }}>
+        {/* Hero */}
+        <div style={{ textAlign:"center", marginBottom:72 }}>
+          <div style={{ fontSize:10, letterSpacing:"0.5em", color:"#e8c547", textTransform:"uppercase", marginBottom:24 }}>✦ Welcome to ✦</div>
+          <h1 style={{ fontSize:"clamp(52px,10vw,100px)", fontWeight:"normal", margin:0, lineHeight:.9, letterSpacing:"-0.03em" }}>
+            Grande<br /><em style={{ color:"#e8c547" }}>National</em>
+          </h1>
+          <p style={{ color:"#444", marginTop:20, fontSize:15, letterSpacing:"0.08em", textTransform:"uppercase" }}>Dance Competition Management</p>
         </div>
-        <div style={{ display:"flex", gap:8 }}>
-          <button onClick={() => { load(); notify("✓ Data refreshed"); }} style={S.ghost("#555")}>↻ Refresh</button>
-          <button onClick={onBack} style={S.ghost("#666")}>← Back</button>
-        </div>
-      </div>
 
-      <div style={{ maxWidth:1100, margin:"0 auto", padding:"32px 24px" }}>
+        {/* Portal cards */}
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))", gap:16, marginBottom:40 }}>
+          {[
+            { icon:"🏫", title:"Studio Registration", sub:"New studios — register your dance school to participate", key:"studio-register", color:"#a78bfa" },
+            { icon:"🎵", title:"Studio Portal", sub:"Registered studios — manage dancers, entries & music uploads", key:"studio-login", color:"#4ecdc4" },
+            { icon:"⚡", title:"Admin Dashboard", sub:"Organizers — approve studios, manage entries & exports", key:"admin", color:"#ff6b6b" },
+          ].map(p => (
+            <button key={p.key} onClick={() => {
+              if (p.key === "studio-login") {
+                if (studioSession) setPortal("studio");
+                else setPortal("studio-login-modal");
+              } else setPortal(p.key);
+            }}
+              style={{ ...S.card, cursor:"pointer", textAlign:"left", border:"1px solid #242424", transition:"all .2s" }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor=p.color; e.currentTarget.style.transform="translateY(-4px)"; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor="#242424"; e.currentTarget.style.transform="translateY(0)"; }}>
+              <div style={{ fontSize:36, marginBottom:16 }}>{p.icon}</div>
+              <div style={{ fontSize:18, color:p.color, marginBottom:8 }}>{p.title}</div>
+              <div style={{ fontSize:13, color:"#555", lineHeight:1.7 }}>{p.sub}</div>
+              <div style={{ marginTop:20, fontSize:11, color:p.color, letterSpacing:"0.15em" }}>ENTER →</div>
+            </button>
+          ))}
+        </div>
 
         {/* Stats */}
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))", gap:12, marginBottom:28 }}>
+        <div style={{ ...S.card, display:"grid", gridTemplateColumns:"repeat(4,1fr)", padding:0, overflow:"hidden" }}>
           {[
-            { label:"Studios", value:studios.filter(s=>s.status==="approved").length, sub:`${studios.filter(s=>s.status==="pending").length} pending`, color:"#a78bfa" },
-            { label:"Dancers", value:dancers.length, sub:`R${totalReg} reg fees`, color:"#4ecdc4" },
-            { label:"Solos", value:solos.length, sub:`R${totalSolos}`, color:"#e8c547" },
-            { label:"Groups/Duos", value:groups.length, sub:`R${totalGroups}`, color:"#ff6b6b" },
-            { label:"Est. Total Revenue", value:`R${grandTotal}`, sub:"estimates only", color:"#a8e6cf" },
-          ].map((st, i, arr) => (
-            <div key={st.label} style={{ ...S.card, padding:"16px 18px", textAlign:"center" }}>
-              <div style={{ fontSize:26, color:st.color, fontStyle:"italic" }}>{st.value}</div>
-              <div style={{ fontSize:10, color:"#444", textTransform:"uppercase", letterSpacing:"0.1em", marginTop:2 }}>{st.label}</div>
-              <div style={{ fontSize:11, color:"#555", marginTop:2 }}>{st.sub}</div>
+            { label:"Active Studios", value:stats.studios, color:"#a78bfa" },
+            { label:"Registered Dancers", value:stats.dancers, color:"#4ecdc4" },
+            { label:"Solo Entries", value:stats.solos, color:"#e8c547" },
+            { label:"Group Entries", value:stats.groups, color:"#ff6b6b" },
+          ].map((st,i) => (
+            <div key={st.label} style={{ padding:"22px 20px", textAlign:"center", borderRight:i<3?"1px solid #1e1e1e":"none" }}>
+              <div style={{ fontSize:32, color:st.color, fontStyle:"italic" }}>{st.value}</div>
+              <div style={{ fontSize:10, color:"#444", marginTop:4, textTransform:"uppercase", letterSpacing:"0.1em" }}>{st.label}</div>
             </div>
           ))}
         </div>
 
-        {/* Export buttons */}
-        <div style={{ display:"flex", gap:10, marginBottom:24, flexWrap:"wrap" }}>
-          <button onClick={exportMasterCSV} style={S.btn("#ff6b6b")}>⬇ Master Export (All)</button>
-          <button onClick={exportRunningOrder} style={S.btn("#e8c547")}>⬇ Running Order by Genre</button>
+        <div style={S.disclaimer}>
+          ⚠️ <strong>Please wait for your final invoice before making payment.</strong> All fees displayed throughout this system are estimates only.
         </div>
+      </div>
 
-        {/* Tabs */}
-        <div style={{ display:"flex", gap:4, marginBottom:24, background:"#141414", padding:4, borderRadius:10, border:"1px solid #1e1e1e" }}>
-          {[["studios","🏫 Studios"],["dancers","👥 Dancers"],["solos","🎭 Solos"],["groups","👯 Groups & Duos"],["invoices","💰 Invoices"]].map(([key,label]) => (
-            <button key={key} onClick={() => setTab(key)} style={{ flex:1, padding:"10px 6px", borderRadius:8, border:"none", background:tab===key?"#ff6b6b":"transparent", color:tab===key?"#fff":"#555", cursor:"pointer", fontFamily:"Georgia,serif", fontSize:13, fontWeight:tab===key?"bold":"normal", transition:"all .2s" }}>{label}</button>
-          ))}
+      {/* Studio login modal */}
+      {portal === "studio-login-modal" && (
+        <StudioLoginModal onClose={() => setPortal("home")} onLogin={loginStudio} notify={notify} />
+      )}
+
+      {notification && <Toast msg={notification.msg} color={notification.color} />}
+    </div>
+  );
+}
+
+function StudioLoginModal({ onClose, onLogin, notify }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [forgot, setForgot] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+
+  const handleLogin = async () => {
+    if (!email || !password) { notify("Please enter email and password","#c0392b"); return; }
+    setLoading(true);
+    try {
+      const studios = await db.get("studios", `studio_email=eq.${encodeURIComponent(email)}&status=eq.approved`);
+      if (!studios.length) { notify("Studio not found or not yet approved","#c0392b"); setLoading(false); return; }
+      const studio = studios[0];
+      if (studio.password_hash !== btoa(password)) { notify("Incorrect password","#c0392b"); setLoading(false); return; }
+      onLogin(studio);
+    } catch(e) { notify("Login error: "+e.message,"#c0392b"); }
+    setLoading(false);
+  };
+
+  const handleReset = async () => {
+    if (!email) { notify("Enter your studio email first","#c0392b"); return; }
+    setResetSent(true);
+    notify("If that email is registered, a reset link has been sent ✓");
+  };
+
+  return (
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,.85)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:1000, padding:24 }}>
+      <div style={{ ...S.card, width:"100%", maxWidth:420 }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:24 }}>
+          <div style={{ fontSize:18, color:"#4ecdc4" }}>{forgot ? "Reset Password" : "Studio Login"}</div>
+          <button onClick={onClose} style={{ background:"none", border:"none", color:"#555", fontSize:20, cursor:"pointer" }}>✕</button>
         </div>
-
-        {loading ? (
-          <div style={{ textAlign:"center", padding:60, color:"#444" }}><Spinner /><div style={{marginTop:12}}>Loading...</div></div>
+        {resetSent ? (
+          <div style={{ textAlign:"center", color:"#888", fontSize:14, lineHeight:1.7 }}>
+            Check your email for a reset link.<br />
+            <button onClick={() => { setForgot(false); setResetSent(false); }} style={{ ...S.ghost("#4ecdc4"), marginTop:16 }}>Back to Login</button>
+          </div>
         ) : (
-          <>
-            {/* ── STUDIOS ── */}
-            {tab === "studios" && (
-              <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-                {studios.length === 0 && <div style={{ ...S.card, textAlign:"center", color:"#444", fontStyle:"italic", padding:40 }}>No studio registrations yet.</div>}
-                {["pending","approved","rejected"].map(status => {
-                  const list = studios.filter(s => s.status === status);
-                  if (!list.length) return null;
-                  return (
-                    <div key={status}>
-                      <div style={{ fontSize:11, letterSpacing:"0.15em", color:status==="approved"?"#4ecdc4":status==="pending"?"#e8c547":"#ff6b6b", textTransform:"uppercase", marginBottom:10 }}>
-                        {status} ({list.length})
-                      </div>
-                      {list.map(s => (
-                        <div key={s.id} style={{ ...S.card, marginBottom:10 }}>
-                          <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:12 }}>
-                            <div style={{ flex:1 }}>
-                              <div style={{ fontWeight:"bold", fontSize:16 }}>{s.studio_name} <span style={{ fontSize:12, color:"#555" }}>· {s.studio_code}</span></div>
-                              <div style={{ fontSize:12, color:"#666", marginTop:4, lineHeight:1.7 }}>
-                                📍 {s.studio_address || "—"}<br/>
-                                📧 {s.studio_email} · 📞 {s.studio_contact_nr || "—"}<br/>
-                                👤 {s.studio_owner_name || "—"} · {s.studio_owner_email || "—"} · {s.studio_owner_contact_nr || "—"}
-                              </div>
-                              <div style={{ marginTop:8 }}>
-                                <span style={S.tag(status==="approved"?"#4ecdc4":status==="pending"?"#e8c547":"#ff6b6b")}>
-                                  {status}
-                                </span>
-                              </div>
-                            </div>
-                            {status === "pending" && (
-                              <div style={{ display:"flex", gap:8 }}>
-                                <button onClick={() => approveStudio(s)} style={S.btn("#4ecdc4")}>✓ Approve</button>
-                                <button onClick={() => rejectStudio(s)} style={S.ghost("#ff6b6b")}>✕ Reject</button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* ── DANCERS ── */}
-            {tab === "dancers" && (
-              <div>
-                <div style={{ display:"flex", gap:10, marginBottom:16, flexWrap:"wrap", alignItems:"center" }}>
-                  <select style={{ ...S.select, width:"auto", minWidth:180 }} value={filterStudio} onChange={e => setFilterStudio(e.target.value)}>
-                    <option value="all">All Studios</option>
-                    {studios.filter(s=>s.status==="approved").map(s => <option key={s.id} value={s.studio_code}>{s.studio_name}</option>)}
-                  </select>
-                </div>
-                <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                  {dancers.filter(d => filterStudio==="all"||d.studio_code===filterStudio).map(d => {
-                    const dSolos = solos.filter(s => s.dancer_id === d.id);
-                    const dGroups = groupMembers.filter(m => m.dancer_id === d.id);
-                    const soloFees = dSolos.length * PRICING.solo;
-                    const groupFees = groups.filter(g => dGroups.some(m => m.group_entry_id === g.id)).reduce((a, g) => a + g.fee_per_person, 0);
-                    return (
-                      <div key={d.id} style={{ ...S.card, padding:"14px 18px" }}>
-                        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
-                          <div>
-                            <div style={{ fontWeight:"bold" }}>{d.first_name} {d.last_name} <span style={{ fontSize:12, color:"#555" }}>· {d.membership_code}</span></div>
-                            <div style={{ fontSize:12, color:"#666", marginTop:3 }}>{d.studio_name} · {d.gender} · Age {d.age} · {d.age_group}</div>
-                            <div style={{ display:"flex", gap:8, marginTop:8, flexWrap:"wrap" }}>
-                              <span style={S.tag("#4ecdc4")}>{dSolos.length} solos</span>
-                              <span style={S.tag("#a78bfa")}>{dGroups.length} groups</span>
-                              <span style={S.tag("#e8c547")}>Est. R{d.registration_fee + soloFees + groupFees}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* ── SOLOS ── */}
-            {tab === "solos" && (
-              <div>
-                <div style={{ display:"flex", gap:10, marginBottom:16, flexWrap:"wrap" }}>
-                  <select style={{ ...S.select, width:"auto", minWidth:180 }} value={filterStudio} onChange={e => setFilterStudio(e.target.value)}>
-                    <option value="all">All Studios</option>
-                    {studios.filter(s=>s.status==="approved").map(s => <option key={s.id} value={s.studio_code}>{s.studio_name}</option>)}
-                  </select>
-                  <select style={{ ...S.select, width:"auto", minWidth:150 }} value={filterGenre} onChange={e => setFilterGenre(e.target.value)}>
-                    <option value="all">All Genres</option>
-                    {GENRES.map(g => <option key={g}>{g}</option>)}
-                  </select>
-                </div>
-                {GENRES.map(genre => {
-                  const items = filteredSolos.filter(s => s.genre === genre);
-                  if (!items.length) return null;
-                  return (
-                    <div key={genre} style={{ marginBottom:24 }}>
-                      <div style={{ fontSize:11, letterSpacing:"0.15em", color:"#e8c547", textTransform:"uppercase", marginBottom:10 }}>
-                        {genre} — {items.length} solo{items.length!==1?"s":""}
-                      </div>
-                      <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                        {items.map(s => {
-                          const url = db.fileUrl(s.file_path);
-                          return (
-                            <div key={s.id} style={{ ...S.card, padding:"12px 18px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-                              <div>
-                                <div style={{ fontWeight:"bold" }}>{s.dancer_name} <span style={{ fontSize:11, color:"#555" }}>· {s.membership_code}</span></div>
-                                <div style={{ fontSize:12, color:"#888", marginTop:2 }}>"{s.song_title}" · {s.studio_name} · {s.age_group}</div>
-                              </div>
-                              {url && (
-                                <button onClick={() => setPlayingUrl(p => p===url?null:url)} style={{ background:"#e8c54718", border:"none", borderRadius:6, padding:"6px 14px", color:"#e8c547", cursor:"pointer", fontSize:13, display:"flex", alignItems:"center" }}>
-                                  {playingUrl===url?"⏸":"▶"}<AudioBars playing={playingUrl===url}/>
-                                </button>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-                {filteredSolos.length === 0 && <div style={{ ...S.card, textAlign:"center", color:"#444", padding:40, fontStyle:"italic" }}>No solo entries match your filters.</div>}
-              </div>
-            )}
-
-            {/* ── GROUPS ── */}
-            {tab === "groups" && (
-              <div>
-                <div style={{ display:"flex", gap:10, marginBottom:16, flexWrap:"wrap" }}>
-                  <select style={{ ...S.select, width:"auto", minWidth:180 }} value={filterStudio} onChange={e => setFilterStudio(e.target.value)}>
-                    <option value="all">All Studios</option>
-                    {studios.filter(s=>s.status==="approved").map(s => <option key={s.id} value={s.studio_code}>{s.studio_name}</option>)}
-                  </select>
-                  <select style={{ ...S.select, width:"auto", minWidth:150 }} value={filterGenre} onChange={e => setFilterGenre(e.target.value)}>
-                    <option value="all">All Genres</option>
-                    {GENRES.map(g => <option key={g}>{g}</option>)}
-                  </select>
-                </div>
-                {filteredGroups.length === 0 && <div style={{ ...S.card, textAlign:"center", color:"#444", padding:40, fontStyle:"italic" }}>No group entries match your filters.</div>}
-                {GENRES.map(genre => {
-                  const items = filteredGroups.filter(g => g.genre === genre);
-                  if (!items.length) return null;
-                  return (
-                    <div key={genre} style={{ marginBottom:24 }}>
-                      <div style={{ fontSize:11, letterSpacing:"0.15em", color:"#a78bfa", textTransform:"uppercase", marginBottom:10 }}>
-                        {genre} — {items.length} group{items.length!==1?"s":""}
-                      </div>
-                      <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                        {items.map(g => {
-                          const members = groupMembers.filter(m => m.group_entry_id === g.id);
-                          const url = db.fileUrl(g.file_path);
-                          return (
-                            <div key={g.id} style={{ ...S.card, padding:"14px 18px" }}>
-                              <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between" }}>
-                                <div style={{ flex:1 }}>
-                                  <div style={{ display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
-                                    <span style={{ fontWeight:"bold", fontSize:15 }}>{g.group_name}</span>
-                                    <span style={S.tag("#a78bfa")}>{g.group_type}</span>
-                                    <span style={{ fontSize:12, color:"#555" }}>{g.studio_name}</span>
-                                  </div>
-                                  <div style={{ fontSize:12, color:"#888", marginTop:4 }}>"{g.song_title}" · {g.age_group} · R{g.total_fee} total</div>
-                                  <div style={{ marginTop:8 }}>
-                                    <div style={{ fontSize:11, color:"#555", marginBottom:4 }}>Members ({members.length}):</div>
-                                    <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
-                                      {members.map(m => <span key={m.id} style={S.tag("#555")}>{m.dancer_name}</span>)}
-                                    </div>
-                                  </div>
-                                </div>
-                                {url && (
-                                  <button onClick={() => setPlayingUrl(p => p===url?null:url)} style={{ background:"#a78bfa18", border:"none", borderRadius:6, padding:"6px 14px", color:"#a78bfa", cursor:"pointer", fontSize:13, display:"flex", alignItems:"center", flexShrink:0 }}>
-                                    {playingUrl===url?"⏸":"▶"}<AudioBars playing={playingUrl===url}/>
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* ── INVOICES ── */}
-            {tab === "invoices" && (
-              <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
-                {studios.filter(s => s.status === "approved").map(studio => {
-                  const stDancers = dancers.filter(d => d.studio_code === studio.studio_code);
-                  const stSolos = solos.filter(s => s.studio_code === studio.studio_code);
-                  const stGroups = groups.filter(g => g.studio_code === studio.studio_code);
-                  const regFees = stDancers.length * PRICING.registration;
-                  const soloFees = stSolos.length * PRICING.solo;
-                  const groupFees = stGroups.reduce((a, g) => a + g.total_fee, 0);
-                  const total = regFees + soloFees + groupFees;
-                  return (
-                    <div key={studio.id} style={S.card}>
-                      <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:16 }}>
-                        <div style={{ flex:1 }}>
-                          <div style={{ fontWeight:"bold", fontSize:17 }}>{studio.studio_name}</div>
-                          <div style={{ fontSize:12, color:"#555", marginTop:4 }}>{studio.studio_code} · {studio.studio_email}</div>
-                          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))", gap:8, marginTop:14 }}>
-                            {[
-                              { label:"Reg fees", value:`R${regFees}`, sub:`${stDancers.length} dancers` },
-                              { label:"Solo fees", value:`R${soloFees}`, sub:`${stSolos.length} entries` },
-                              { label:"Group fees", value:`R${groupFees}`, sub:`${stGroups.length} entries` },
-                              { label:"Est. Total", value:`R${total}`, sub:"estimate only", bold:true },
-                            ].map(it => (
-                              <div key={it.label} style={{ padding:"10px 12px", background:"#1c1c1c", borderRadius:8, border:"1px solid #242424" }}>
-                                <div style={{ fontSize:it.bold?18:15, color:it.bold?"#ff6b6b":"#f0ece0", fontWeight:it.bold?"bold":"normal" }}>{it.value}</div>
-                                <div style={{ fontSize:10, color:"#444", textTransform:"uppercase", letterSpacing:"0.08em" }}>{it.label}</div>
-                                <div style={{ fontSize:11, color:"#555" }}>{it.sub}</div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                        <button onClick={() => exportStudioInvoice(studio)} style={S.ghost("#e8c547")}>⬇ Export Invoice</button>
-                      </div>
-                    </div>
-                  );
-                })}
-                {studios.filter(s=>s.status==="approved").length === 0 && (
-                  <div style={{ ...S.card, textAlign:"center", color:"#444", padding:40, fontStyle:"italic" }}>No approved studios yet.</div>
-                )}
-                <div style={S.disclaimer}>⚠️ All amounts shown are estimates. Please issue final invoices separately before requesting payment from studios.</div>
-              </div>
-            )}
-          </>
+          <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+            <div><label style={S.label}>Studio Email</label><input style={S.input} type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="studio@email.com" /></div>
+            {!forgot && <div><label style={S.label}>Password</label><input style={S.input} type="password" value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleLogin()} placeholder="••••••••" /></div>}
+            <button style={S.btn("#4ecdc4")} onClick={forgot ? handleReset : handleLogin} disabled={loading}>
+              {loading ? <Spinner color="#0a0a0a" /> : forgot ? "Send Reset Link" : "Login →"}
+            </button>
+            <button onClick={() => setForgot(!forgot)} style={{ background:"none", border:"none", color:"#555", fontSize:13, cursor:"pointer", fontFamily:"Georgia,serif" }}>
+              {forgot ? "← Back to login" : "Forgot password?"}
+            </button>
+          </div>
         )}
       </div>
     </div>
