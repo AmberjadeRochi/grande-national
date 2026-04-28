@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { db, S, Spinner, Toast, AudioBars, GENRES, AGE_GROUPS, PRICING, calcAge, calcAgeGroup, membershipCode, groupType, groupFee } from "./App.jsx";
+import { supabase, S, Spinner, AudioBars, GENRES, AGE_GROUPS, PRICING, calcAge, calcAgeGroup, membershipCode, groupType, groupFee } from "./App.jsx";
 import * as XLSX from "xlsx";
 
 export default function StudioPortal({ session, onLogout, notify }) {
@@ -24,13 +24,14 @@ export default function StudioPortal({ session, onLogout, notify }) {
   const load = async () => {
     setLoading(true);
     try {
-      const [d, s, g, gm] = await Promise.all([
-        db.get("dancers", `studio_code=eq.${session.studio_code}`),
-        db.get("solo_entries", `studio_code=eq.${session.studio_code}`),
-        db.get("group_entries", `studio_code=eq.${session.studio_code}`),
-        db.get("group_members", `select=*`),
+      const [r1, r2, r3, r4] = await Promise.all([
+        supabase.from("dancers").select("*").eq("studio_code", session.studio_code).order("last_name"),
+        supabase.from("solo_entries").select("*").eq("studio_code", session.studio_code).order("created_at"),
+        supabase.from("group_entries").select("*").eq("studio_code", session.studio_code).order("created_at"),
+        supabase.from("group_members").select("*"),
       ]);
-      setDancers(d); setSolos(s); setGroups(g); setGroupMembers(gm);
+      if (r1.error) throw r1.error;
+      setDancers(r1.data||[]); setSolos(r2.data||[]); setGroups(r3.data||[]); setGroupMembers(r4.data||[]);
     } catch(e) { notify("Load error: "+e.message, "#c0392b"); }
     setLoading(false);
   };
@@ -70,7 +71,7 @@ export default function StudioPortal({ session, onLogout, notify }) {
         const code = membershipCode(session.studio_code, firstName, lastName, dobStr);
         const existing = dancers.find(d => d.membership_code === code);
         if (existing) continue;
-        await db.insert("dancers", {
+        await supabase.from("dancers").insert({
           first_name: firstName, last_name: lastName,
           date_of_birth: dobStr, gender: row["Gender"] || "Female",
           age, age_group: calcAgeGroup(age),
@@ -174,7 +175,7 @@ export default function StudioPortal({ session, onLogout, notify }) {
                           <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
                             <button onClick={()=>setShowAddSolo(d)} style={S.ghost("#e8c547")}>+ Solo</button>
                             <button onClick={()=>setShowEditDancer(d)} style={S.ghost("#666")}>Edit</button>
-                            <button onClick={async()=>{ if(!confirm(`Delete ${d.first_name}? This removes all their entries.`)) return; await db.remove("dancers",d.id); await load(); notify(`${d.first_name} removed`); }} style={S.ghost("#ff6b6b")}>✕</button>
+                            <button onClick={async()=>{ if(!confirm(`Delete ${d.first_name}? This removes all their entries.`)) return; await supabase.from("dancers").delete().eq("id",d.id); await load(); notify(`${d.first_name} removed`); }} style={S.ghost("#ff6b6b")}>✕</button>
                           </div>
                         </div>
                       );
@@ -202,7 +203,7 @@ export default function StudioPortal({ session, onLogout, notify }) {
                           <div style={{ fontSize:11, letterSpacing:"0.15em", color:"#e8c547", textTransform:"uppercase", marginBottom:10 }}>{genre} ({genreSolos.length})</div>
                           <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
                             {genreSolos.map(s => {
-                              const url = db.fileUrl(s.file_path);
+                              const url = (s.file_path ? `https://xyezjpubmveizkzqbxue.supabase.co/storage/v1/object/public/mp3s/${s.file_path}` : null);
                               return (
                                 <div key={s.id} style={{ ...S.card, padding:"14px 18px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
                                   <div>
@@ -214,7 +215,7 @@ export default function StudioPortal({ session, onLogout, notify }) {
                                       {playingUrl===url?"⏸":"▶"}<AudioBars playing={playingUrl===url}/>
                                     </button>}
                                     <button onClick={()=>setShowEditSolo(s)} style={S.ghost("#666")}>Edit</button>
-                                    <button onClick={async()=>{ if(!confirm("Delete this solo entry?")) return; await db.remove("solo_entries",s.id); await load(); notify("Solo removed"); }} style={S.ghost("#ff6b6b")}>✕</button>
+                                    <button onClick={async()=>{ if(!confirm("Delete this solo entry?")) return; await supabase.from("solo_entries").delete().eq("id",s.id); await load(); notify("Solo removed"); }} style={S.ghost("#ff6b6b")}>✕</button>
                                   </div>
                                 </div>
                               );
@@ -240,7 +241,7 @@ export default function StudioPortal({ session, onLogout, notify }) {
                   <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
                     {groups.map(g => {
                       const members = groupMembers.filter(m=>m.group_entry_id===g.id);
-                      const url = db.fileUrl(g.file_path);
+                      const url = (g.file_path ? `https://xyezjpubmveizkzqbxue.supabase.co/storage/v1/object/public/mp3s/${g.file_path}` : null);
                       return (
                         <div key={g.id} style={S.card}>
                           <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:12 }}>
@@ -260,7 +261,7 @@ export default function StudioPortal({ session, onLogout, notify }) {
                                 {playingUrl===url?"⏸":"▶"}<AudioBars playing={playingUrl===url}/>
                               </button>}
                               <button onClick={()=>setShowEditGroup(g)} style={S.ghost("#666")}>Edit</button>
-                              <button onClick={async()=>{ if(!confirm(`Delete group "${g.group_name}"?`)) return; await db.remove("group_entries",g.id); await load(); notify("Group removed"); }} style={S.ghost("#ff6b6b")}>✕</button>
+                              <button onClick={async()=>{ if(!confirm(`Delete group "${g.group_name}"?`)) return; await supabase.from("group_entries").delete().eq("id",g.id); await load(); notify("Group removed"); }} style={S.ghost("#ff6b6b")}>✕</button>
                             </div>
                           </div>
                         </div>
@@ -301,7 +302,7 @@ function AddDancerModal({ session, onClose, onSave, notify }) {
     setLoading(true);
     try {
       const code = membershipCode(session.studio_code, form.first_name, form.last_name, form.date_of_birth);
-      await db.insert("dancers", { ...form, age, age_group:ageGroup, studio_code:session.studio_code, studio_name:session.studio_name, membership_code:code, registration_fee:PRICING.registration });
+      const {error} = await supabase.from("dancers").insert({ ...form, age, age_group:ageGroup, studio_code:session.studio_code, studio_name:session.studio_name, membership_code:code, registration_fee:PRICING.registration }); if(error) throw error;
       onSave();
     } catch(e) { notify(e.message.includes("duplicate")?"Dancer already exists":e.message,"#c0392b"); }
     setLoading(false);
@@ -338,7 +339,7 @@ function EditDancerModal({ dancer, onClose, onSave, notify }) {
 
   const save = async () => {
     setLoading(true);
-    try { await db.update("dancers", dancer.id, { ...form, age, age_group:ageGroup }); onSave(); }
+    try { const {error} = await supabase.from("dancers").update({ ...form, age, age_group:ageGroup }).eq("id",dancer.id); if(error) throw error; onSave(); }
     catch(e) { notify(e.message,"#c0392b"); }
     setLoading(false);
   };
@@ -376,8 +377,9 @@ function AddSoloModal({ dancer: initialDancer, dancers, session, onClose, onSave
     setLoading(true);
     try {
       const path = `${session.studio_code}/solos/${dancer.id}_${form.genre}_${Date.now()}_${form.file.name}`;
-      await db.uploadFile(path, form.file);
-      await db.insert("solo_entries", {
+      const {error:ue} = await supabase.storage.from("mp3s").upload(path, form.file, {upsert:true});
+      if(ue) throw ue;
+      const {error:ie} = await supabase.from("solo_entries").insert({
         dancer_id:dancer.id, dancer_name:`${dancer.first_name} ${dancer.last_name}`,
         membership_code:dancer.membership_code, studio_code:session.studio_code,
         studio_name:session.studio_name, genre:form.genre, song_title:form.song_title,
@@ -430,11 +432,11 @@ function EditSoloModal({ solo, onClose, onSave, notify }) {
       const updates = { genre:form.genre, song_title:form.song_title };
       if (form.file) {
         const path = `${solo.studio_code}/solos/${solo.dancer_id}_${form.genre}_${Date.now()}_${form.file.name}`;
-        await db.uploadFile(path, form.file);
+        await supabase.storage.from("mp3s").upload(path, form.file, {upsert:true});
         updates.file_name = form.file.name;
         updates.file_path = path;
       }
-      await db.update("solo_entries", solo.id, updates);
+      const {error:ue} = await supabase.from("solo_entries").update(updates).eq("id",solo.id); if(ue) throw ue;
       onSave();
     } catch(e) { notify(e.message,"#c0392b"); }
     setLoading(false);
@@ -484,16 +486,17 @@ function AddGroupModal({ dancers, session, onClose, onSave, notify }) {
     setLoading(true);
     try {
       const path = `${session.studio_code}/groups/${form.group_name.replace(/\s/g,"_")}_${Date.now()}_${form.file.name}`;
-      await db.uploadFile(path, form.file);
-      const [entry] = await db.insert("group_entries", {
+      const {error:gue} = await supabase.storage.from("mp3s").upload(path, form.file, {upsert:true});
+      if(gue) throw gue;
+      const {data:entryArr, error:gie} = await supabase.from("group_entries").insert({
         studio_code:session.studio_code, studio_name:session.studio_name,
         group_name:form.group_name, group_type:gType, genre:form.genre,
         song_title:form.song_title, age_group:form.age_group,
         member_count:memberCount, fee_per_person:feePerPerson,
         total_fee:totalFee, file_name:form.file.name, file_path:path
-      });
+      }).select(); if(gie) throw gie; const entry=entryArr[0];
       for (const d of selectedMembers) {
-        await db.insert("group_members", { group_entry_id:entry.id, dancer_id:d.id, dancer_name:`${d.first_name} ${d.last_name}`, membership_code:d.membership_code });
+        await supabase.from("group_members").insert({ group_entry_id:entry.id, dancer_id:d.id, dancer_name:`${d.first_name} ${d.last_name}`, membership_code:d.membership_code });
       }
       onSave();
     } catch(e) { notify(e.message,"#c0392b"); }
@@ -567,14 +570,14 @@ function EditGroupModal({ group, dancers, groupMembers, onClose, onSave, notify 
       const updates = { group_name:form.group_name, genre:form.genre, song_title:form.song_title, age_group:form.age_group, group_type:gType, member_count:memberCount, fee_per_person:feePerPerson, total_fee:totalFee };
       if (form.file) {
         const path = `${group.studio_code}/groups/${form.group_name.replace(/\s/g,"_")}_${Date.now()}_${form.file.name}`;
-        await db.uploadFile(path, form.file);
+        await supabase.storage.from("mp3s").upload(path, form.file, {upsert:true});
         updates.file_name = form.file.name; updates.file_path = path;
       }
-      await db.update("group_entries", group.id, updates);
+      const {error:gue2} = await supabase.from("group_entries").update(updates).eq("id",group.id); if(gue2) throw gue2;
       // update members: delete old, insert new
-      for (const m of groupMembers) { await db.remove("group_members", m.id); }
+      for (const m of groupMembers) { await supabase.from("group_members").delete().eq("id",m.id); }
       for (const d of selectedMembers) {
-        await db.insert("group_members", { group_entry_id:group.id, dancer_id:d.id, dancer_name:`${d.first_name} ${d.last_name}`, membership_code:d.membership_code });
+        await supabase.from("group_members").insert({ group_entry_id:group.id, dancer_id:d.id, dancer_name:`${d.first_name} ${d.last_name}`, membership_code:d.membership_code });
       }
       onSave();
     } catch(e) { notify(e.message,"#c0392b"); }
