@@ -1,113 +1,185 @@
 import { useState } from "react";
 import { db, S, Spinner } from "./App.jsx";
 
+function generateCode(name) {
+  const words = name.toUpperCase().replace(/[^A-Z0-9\s]/g, "").trim().split(/\s+/).filter(Boolean);
+  const initials = words.map(w => w[0]).join("").slice(0, 4);
+  const num = Math.floor(100 + Math.random() * 900);
+  return initials + "-" + num;
+}
+
 export default function StudioRegister({ onBack, onSuccess, notify }) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState({
-    studio_name:"", studio_code:"", studio_address:"", studio_contact_nr:"",
-    studio_email:"", studio_owner_name:"", studio_owner_email:"",
-    studio_owner_contact_nr:"", password:"", confirm_password:""
+    studio_name: "", studio_code: "", studio_address: "",
+    studio_contact_nr: "", studio_email: "", studio_owner_name: "",
+    studio_owner_email: "", studio_owner_contact_nr: "",
+    password: "", confirm_password: ""
   });
 
-  const set = (k,v) => setForm(p=>({...p,[k]:v}));
+  const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
-  const generateCode = (name) => {
-    return name.toUpperCase().replace(/[^A-Z0-9]/g," ").trim().split(/\s+/).map(w=>w[0]).join("").slice(0,6) + "-" + Math.floor(100+Math.random()*900);
+  const handleNameChange = (val) => {
+    set("studio_name", val);
+    if (val.length >= 2) set("studio_code", generateCode(val));
   };
 
   const submit = async () => {
-    if (!form.studio_name || !form.studio_email || !form.password) { notify("Please fill in all required fields","#c0392b"); return; }
-    if (form.password !== form.confirm_password) { notify("Passwords do not match","#c0392b"); return; }
-    if (form.password.length < 6) { notify("Password must be at least 6 characters","#c0392b"); return; }
+    if (!form.studio_name || !form.studio_email || !form.password) {
+      notify("Please fill in all required fields", "#c0392b"); return;
+    }
+    if (form.password !== form.confirm_password) {
+      notify("Passwords do not match", "#c0392b"); return;
+    }
+    if (form.password.length < 6) {
+      notify("Password must be at least 6 characters", "#c0392b"); return;
+    }
+    const finalCode = (form.studio_code || generateCode(form.studio_name)).trim();
     setLoading(true);
     try {
-      const code = form.studio_code || generateCode(form.studio_name);
       await db.insert("studios", {
-        studio_name: form.studio_name,
-        studio_code: code,
-        studio_address: form.studio_address,
-        studio_contact_nr: form.studio_contact_nr,
-        studio_email: form.studio_email,
-        studio_owner_name: form.studio_owner_name,
-        studio_owner_email: form.studio_owner_email,
-        studio_owner_contact_nr: form.studio_owner_contact_nr,
-        password_hash: btoa(form.password),
+        studio_name: form.studio_name.trim(),
+        studio_code: finalCode,
+        studio_address: form.studio_address.trim(),
+        studio_contact_nr: form.studio_contact_nr.trim(),
+        studio_email: form.studio_email.trim().toLowerCase(),
+        studio_owner_name: form.studio_owner_name.trim(),
+        studio_owner_email: form.studio_owner_email.trim().toLowerCase(),
+        studio_owner_contact_nr: form.studio_owner_contact_nr.trim(),
+        password_hash: btoa(unescape(encodeURIComponent(form.password))),
         status: "pending"
       });
-      onSuccess(code);
-    } catch(e) {
-      notify("Registration failed: " + (e.message.includes("duplicate") ? "Email or studio code already exists" : e.message), "#c0392b");
+      setSubmitted(true);
+    } catch (e) {
+      const msg = e.message || "";
+      if (msg.includes("duplicate") || msg.includes("unique")) {
+        notify("A studio with this email or code already exists.", "#c0392b");
+      } else {
+        notify("Registration failed: " + msg, "#c0392b");
+      }
     }
     setLoading(false);
   };
 
-  const steps = ["Studio Details", "Owner Details", "Account Setup"];
+  const steps = ["Studio Details", "Owner Details", "Set Password"];
+
+  if (submitted) {
+    return (
+      <div style={S.app}>
+        <div style={{ maxWidth: 560, margin: "0 auto", padding: "80px 24px", textAlign: "center" }}>
+          <div style={{ fontSize: 56, marginBottom: 20 }}>✓</div>
+          <div style={{ fontSize: 28, color: "#a78bfa", marginBottom: 16 }}>Registration Submitted!</div>
+          <p style={{ color: "#666", lineHeight: 1.8, fontSize: 14 }}>
+            Thank you for registering <strong style={{ color: "#f0ece0" }}>{form.studio_name}</strong>.<br />
+            Your studio login code is: <strong style={{ color: "#e8c547" }}>{form.studio_code}</strong><br /><br />
+            An admin will review and approve your registration.<br />
+            Once approved, log in using your studio email and password.
+          </p>
+          <button style={{ ...S.btn("#a78bfa"), margin: "24px auto 0" }} onClick={onBack}>← Back to Home</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={S.app}>
-      <div style={{ maxWidth:600, margin:"0 auto", padding:"48px 24px" }}>
+      <div style={{ maxWidth: 600, margin: "0 auto", padding: "48px 24px" }}>
         <button style={S.back} onClick={onBack}>← Back</button>
-        <div style={{ fontSize:10, letterSpacing:"0.4em", color:"#a78bfa", textTransform:"uppercase", marginBottom:10 }}>Grande National</div>
-        <h2 style={{ fontSize:30, fontWeight:"normal", margin:"0 0 8px" }}>Studio Registration</h2>
-        <p style={{ color:"#555", fontSize:13, marginBottom:28 }}>Register your dance studio to participate. Admin approval required before login.</p>
+        <div style={{ fontSize: 10, letterSpacing: "0.4em", color: "#a78bfa", textTransform: "uppercase", marginBottom: 10 }}>Grande National</div>
+        <h2 style={{ fontSize: 30, fontWeight: "normal", margin: "0 0 8px" }}>Studio Registration</h2>
+        <p style={{ color: "#555", fontSize: 13, marginBottom: 28 }}>Register your dance studio. Admin approval is required before you can log in.</p>
 
-        {/* Progress */}
-        <div style={{ display:"flex", gap:8, marginBottom:32 }}>
-          {steps.map((s,i) => (
-            <div key={s} style={{ flex:1, textAlign:"center" }}>
-              <div style={{ height:3, borderRadius:2, background:step>i?"#a78bfa":"#222", marginBottom:6, transition:"background .3s" }} />
-              <div style={{ fontSize:10, color:step>i?"#a78bfa":"#333", textTransform:"uppercase", letterSpacing:"0.08em" }}>{s}</div>
+        <div style={{ display: "flex", gap: 8, marginBottom: 32 }}>
+          {steps.map((s, i) => (
+            <div key={s} style={{ flex: 1, textAlign: "center" }}>
+              <div style={{ height: 3, borderRadius: 2, background: step > i ? "#a78bfa" : "#222", marginBottom: 6, transition: "background .3s" }} />
+              <div style={{ fontSize: 10, color: step > i ? "#a78bfa" : "#333", textTransform: "uppercase", letterSpacing: "0.08em" }}>{s}</div>
             </div>
           ))}
         </div>
 
         <div style={S.card}>
           {step === 1 && (
-            <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
-              <div><label style={S.label}>Studio Name *</label><input style={S.input} value={form.studio_name} onChange={e=>{set("studio_name",e.target.value); if(!form.studio_code) set("studio_code",generateCode(e.target.value));}} placeholder="e.g. Sunshine Dance Academy" /></div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               <div>
-                <label style={S.label}>Studio Code * <span style={{color:"#444",textTransform:"none",letterSpacing:0}}>(auto-generated, can edit)</span></label>
-                <input style={S.input} value={form.studio_code} onChange={e=>set("studio_code",e.target.value.toUpperCase())} placeholder="LFJ-123" />
-                <div style={{fontSize:11,color:"#444",marginTop:4}}>This is the code your dancers will use to register</div>
+                <label style={S.label}>Studio Name *</label>
+                <input style={S.input} value={form.studio_name} onChange={e => handleNameChange(e.target.value)} placeholder="e.g. Sunshine Dance Academy" />
               </div>
-              <div><label style={S.label}>Studio Address</label><input style={S.input} value={form.studio_address} onChange={e=>set("studio_address",e.target.value)} placeholder="123 Dance Street, City" /></div>
-              <div><label style={S.label}>Studio Contact Number</label><input style={S.input} value={form.studio_contact_nr} onChange={e=>set("studio_contact_nr",e.target.value)} placeholder="011 000 0000" /></div>
-              <div><label style={S.label}>Studio Email Address *</label><input style={S.input} type="email" value={form.studio_email} onChange={e=>set("studio_email",e.target.value)} placeholder="studio@email.com" /></div>
-              <button style={S.btn("#a78bfa")} onClick={() => { if(!form.studio_name||!form.studio_email){notify("Studio name and email are required","#c0392b");return;} setStep(2); }}>Next →</button>
+              <div>
+                <label style={S.label}>Studio Code * <span style={{ color: "#444", textTransform: "none", letterSpacing: 0, fontSize: 10 }}>(auto-generated — you can edit)</span></label>
+                <input style={S.input} value={form.studio_code} onChange={e => set("studio_code", e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, ""))} placeholder="e.g. SDA-456" />
+                <div style={{ fontSize: 11, color: "#444", marginTop: 4 }}>Teachers use this to log into the studio portal</div>
+              </div>
+              <div>
+                <label style={S.label}>Studio Address</label>
+                <input style={S.input} value={form.studio_address} onChange={e => set("studio_address", e.target.value)} placeholder="123 Dance Street, City" />
+              </div>
+              <div>
+                <label style={S.label}>Studio Contact Number</label>
+                <input style={S.input} value={form.studio_contact_nr} onChange={e => set("studio_contact_nr", e.target.value)} placeholder="011 000 0000" />
+              </div>
+              <div>
+                <label style={S.label}>Studio Email Address *</label>
+                <input style={S.input} type="email" value={form.studio_email} onChange={e => set("studio_email", e.target.value)} placeholder="info@yourstudio.co.za" />
+              </div>
+              <button style={S.btn("#a78bfa")} onClick={() => {
+                if (!form.studio_name || !form.studio_email || !form.studio_code) {
+                  notify("Studio name, email and code are required", "#c0392b"); return;
+                }
+                setStep(2);
+              }}>Next →</button>
             </div>
           )}
 
           {step === 2 && (
-            <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
-              <div><label style={S.label}>Studio Owner / Principal Name *</label><input style={S.input} value={form.studio_owner_name} onChange={e=>set("studio_owner_name",e.target.value)} placeholder="Owner Full Name" /></div>
-              <div><label style={S.label}>Owner Email Address</label><input style={S.input} type="email" value={form.studio_owner_email} onChange={e=>set("studio_owner_email",e.target.value)} placeholder="owner@email.com" /></div>
-              <div><label style={S.label}>Owner Contact Number</label><input style={S.input} value={form.studio_owner_contact_nr} onChange={e=>set("studio_owner_contact_nr",e.target.value)} placeholder="082 000 0000" /></div>
-              <div style={{ display:"flex", gap:10 }}>
-                <button style={S.ghost()} onClick={()=>setStep(1)}>← Back</button>
-                <button style={{ ...S.btn("#a78bfa"), flex:1 }} onClick={()=>{ if(!form.studio_owner_name){notify("Owner name is required","#c0392b");return;} setStep(3); }}>Next →</button>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div>
+                <label style={S.label}>Studio Owner / Principal Name *</label>
+                <input style={S.input} value={form.studio_owner_name} onChange={e => set("studio_owner_name", e.target.value)} placeholder="Full Name" />
+              </div>
+              <div>
+                <label style={S.label}>Owner Email Address</label>
+                <input style={S.input} type="email" value={form.studio_owner_email} onChange={e => set("studio_owner_email", e.target.value)} placeholder="owner@yourstudio.co.za" />
+              </div>
+              <div>
+                <label style={S.label}>Owner Contact Number</label>
+                <input style={S.input} value={form.studio_owner_contact_nr} onChange={e => set("studio_owner_contact_nr", e.target.value)} placeholder="082 000 0000" />
+              </div>
+              <div style={{ display: "flex", gap: 10 }}>
+                <button style={S.ghost()} onClick={() => setStep(1)}>← Back</button>
+                <button style={{ ...S.btn("#a78bfa"), flex: 1 }} onClick={() => {
+                  if (!form.studio_owner_name) { notify("Owner name is required", "#c0392b"); return; }
+                  setStep(3);
+                }}>Next →</button>
               </div>
             </div>
           )}
 
           {step === 3 && (
-            <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
-              <div style={{ padding:"12px 16px", background:"#1a1200", border:"1px solid #3a2e00", borderRadius:8, fontSize:13, color:"#a08c40" }}>
-                Your studio code will be: <strong style={{color:"#e8c547"}}>{form.studio_code}</strong><br/>
-                <span style={{fontSize:11}}>Share this with your dancers so they can register under your studio.</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div style={{ padding: "12px 16px", background: "#1a1200", border: "1px solid #3a2e00", borderRadius: 8, fontSize: 13, color: "#a08c40" }}>
+                Studio: <strong style={{ color: "#f0ece0" }}>{form.studio_name}</strong><br />
+                Login code: <strong style={{ color: "#e8c547" }}>{form.studio_code}</strong>
               </div>
-              <div><label style={S.label}>Set Password *</label><input style={S.input} type="password" value={form.password} onChange={e=>set("password",e.target.value)} placeholder="Min. 6 characters" /></div>
-              <div><label style={S.label}>Confirm Password *</label><input style={S.input} type="password" value={form.confirm_password} onChange={e=>set("confirm_password",e.target.value)} placeholder="Repeat password" /></div>
-              <div style={{ display:"flex", gap:10 }}>
-                <button style={S.ghost()} onClick={()=>setStep(2)}>← Back</button>
-                <button style={{ ...S.btn("#a78bfa"), flex:1 }} onClick={submit} disabled={loading}>
+              <div>
+                <label style={S.label}>Set Password *</label>
+                <input style={S.input} type="password" value={form.password} onChange={e => set("password", e.target.value)} placeholder="Minimum 6 characters" />
+              </div>
+              <div>
+                <label style={S.label}>Confirm Password *</label>
+                <input style={S.input} type="password" value={form.confirm_password} onChange={e => set("confirm_password", e.target.value)} placeholder="Repeat your password" onKeyDown={e => e.key === "Enter" && submit()} />
+              </div>
+              <div style={{ display: "flex", gap: 10 }}>
+                <button style={S.ghost()} onClick={() => setStep(2)}>← Back</button>
+                <button style={{ ...S.btn("#a78bfa"), flex: 1 }} onClick={submit} disabled={loading}>
                   {loading ? <Spinner color="#0a0a0a" /> : "Submit Registration"}
                 </button>
               </div>
             </div>
           )}
         </div>
-
         <div style={S.disclaimer}>⚠️ Please wait for your final invoice before making payment. All fees displayed are estimates only.</div>
       </div>
     </div>
