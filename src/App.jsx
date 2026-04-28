@@ -198,13 +198,15 @@ export default function App() {
 function LoginModal({ onClose, onLogin, notify }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [forgot, setForgot] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+  const [pwError, setPwError] = useState("");
 
   const handleLogin = async () => {
-    if (!email || !password) { notify("Please enter email and password","#c0392b"); return; }
-    setLoading(true);
+    if (!email || !password) { setPwError("Please enter your email and password."); return; }
+    setLoading(true); setPwError("");
     try {
       const { data, error } = await supabase
         .from("studios")
@@ -212,11 +214,11 @@ function LoginModal({ onClose, onLogin, notify }) {
         .eq("studio_email", email.trim().toLowerCase())
         .eq("status", "approved")
         .single();
-      if (error || !data) { notify("Studio not found or not yet approved by admin","#c0392b"); setLoading(false); return; }
+      if (error || !data) { setPwError("Studio not found or not yet approved by admin."); setLoading(false); return; }
       const encoded = btoa(unescape(encodeURIComponent(password)));
-      if (data.password_hash !== encoded) { notify("Incorrect password","#c0392b"); setLoading(false); return; }
+      if (data.password_hash !== encoded) { setPwError("Incorrect password — please try again."); setLoading(false); return; }
       onLogin(data);
-    } catch(e) { notify("Login error: " + e.message,"#c0392b"); }
+    } catch(e) { setPwError("Login error: " + e.message); }
     setLoading(false);
   };
 
@@ -234,8 +236,22 @@ function LoginModal({ onClose, onLogin, notify }) {
           </div>
         ) : (
           <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
-            <div><label style={S.label}>Studio Email</label><input style={S.input} type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="info@yourstudio.co.za" /></div>
-            {!forgot && <div><label style={S.label}>Password</label><input style={S.input} type="password" value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleLogin()} placeholder="••••••••" /></div>}
+            <div>
+              <label style={S.label}>Studio Email</label>
+              <input style={S.input} type="email" value={email} onChange={e=>{setEmail(e.target.value);setPwError("");}} placeholder="info@yourstudio.co.za" />
+            </div>
+            {!forgot && (
+              <div>
+                <label style={S.label}>Password</label>
+                <div style={{position:"relative"}}>
+                  <input style={{...S.input, paddingRight:44}} type={showPw?"text":"password"} value={password} onChange={e=>{setPassword(e.target.value);setPwError("");}} onKeyDown={e=>e.key==="Enter"&&handleLogin()} placeholder="••••••••" />
+                  <button onClick={()=>setShowPw(p=>!p)} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:"#666",cursor:"pointer",fontSize:16,padding:0}}>
+                    {showPw?"🙈":"👁️"}
+                  </button>
+                </div>
+              </div>
+            )}
+            {pwError && <div style={{padding:"8px 12px",background:"#c0392b18",border:"1px solid #c0392b44",borderRadius:8,fontSize:13,color:"#e74c3c"}}>{pwError}</div>}
             <button style={S.btn("#4ecdc4")} onClick={forgot?()=>setResetSent(true):handleLogin} disabled={loading}>
               {loading?<Spinner color="#0a0a0a"/>:forgot?"Send Reset Request":"Login →"}
             </button>
