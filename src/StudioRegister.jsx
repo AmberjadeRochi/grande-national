@@ -53,6 +53,15 @@ export default function StudioRegister({ onBack, onSuccess, notify }) {
     if (form.password.length < 6) { notify("Password must be at least 6 characters","#c0392b"); return; }
     setLoading(true);
     try {
+      // Check if submissions are locked
+      const { data: settings } = await supabase.from("app_settings").select("value").eq("key","submissions_locked").single().catch(()=>({data:null}));
+      if (settings?.value === "true") {
+        setError("Studio registrations are currently closed. Please contact the competition organiser.");
+        setLoading(false);
+        return;
+      }
+    } catch(e) { /* continue */ }
+    try {
       const { error } = await supabase.from("studios").insert({
         studio_name: form.studio_name.trim(),
         studio_code: form.studio_code.trim(),
