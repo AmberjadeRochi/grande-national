@@ -34,6 +34,7 @@ export default function StudioRegister({ onBack, onSuccess, notify }) {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
+  const [locked, setLocked] = useState(false);
   const [form, setForm] = useState({
     studio_name:"", studio_code:"", studio_address:"",
     studio_contact_nr:"", studio_email:"", studio_owner_name:"",
@@ -141,6 +142,12 @@ export default function StudioRegister({ onBack, onSuccess, notify }) {
         <div style={S.card}>
           {step===1 && (
             <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+              {locked && (
+              <div style={{padding:"14px 16px",background:"#2a0808",border:"1px solid #c0392b",borderRadius:6,fontSize:13,color:"#ff6b6b",fontFamily:"'Montserrat',sans-serif",lineHeight:1.6}}>
+                🔒 <strong>Studio registrations are currently closed.</strong><br/>
+                Please contact the competition organiser for assistance.
+              </div>
+            )}
               {error && <div style={{padding:"10px 14px",background:"#2a0a0a",border:"1px solid #c0392b88",borderRadius:6,fontSize:13,color:"#ff6b6b",fontFamily:"'Montserrat',sans-serif",lineHeight:1.5}}>⚠️ {error}</div>}
               <div><label style={S.label}>Studio Name *</label><input style={S.input} value={form.studio_name} onChange={e=>handleNameChange(e.target.value)} placeholder="e.g. Sunshine Dance Academy" /></div>
               <div>
@@ -156,6 +163,12 @@ export default function StudioRegister({ onBack, onSuccess, notify }) {
           )}
           {step===2 && (
             <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+              {locked && (
+              <div style={{padding:"14px 16px",background:"#2a0808",border:"1px solid #c0392b",borderRadius:6,fontSize:13,color:"#ff6b6b",fontFamily:"'Montserrat',sans-serif",lineHeight:1.6}}>
+                🔒 <strong>Studio registrations are currently closed.</strong><br/>
+                Please contact the competition organiser for assistance.
+              </div>
+            )}
               {error && <div style={{padding:"10px 14px",background:"#2a0a0a",border:"1px solid #c0392b88",borderRadius:6,fontSize:13,color:"#ff6b6b",fontFamily:"'Montserrat',sans-serif",lineHeight:1.5}}>⚠️ {error}</div>}
               <div><label style={S.label}>Studio Owner / Principal Name *</label><input style={S.input} value={form.studio_owner_name} onChange={e=>set("studio_owner_name",e.target.value)} placeholder="Full Name" /></div>
               <div><label style={S.label}>Owner Email Address *</label><input style={S.input} type="email" value={form.studio_owner_email} onChange={e=>set("studio_owner_email",e.target.value)} placeholder="owner@yourstudio.co.za" /></div>
@@ -168,6 +181,12 @@ export default function StudioRegister({ onBack, onSuccess, notify }) {
           )}
           {step===3 && (
             <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+              {locked && (
+              <div style={{padding:"14px 16px",background:"#2a0808",border:"1px solid #c0392b",borderRadius:6,fontSize:13,color:"#ff6b6b",fontFamily:"'Montserrat',sans-serif",lineHeight:1.6}}>
+                🔒 <strong>Studio registrations are currently closed.</strong><br/>
+                Please contact the competition organiser for assistance.
+              </div>
+            )}
               {error && <div style={{padding:"10px 14px",background:"#2a0a0a",border:"1px solid #c0392b88",borderRadius:6,fontSize:13,color:"#ff6b6b",fontFamily:"'Montserrat',sans-serif",lineHeight:1.5}}>⚠️ {error}</div>}
               <div style={{fontSize:12,color:"#888",fontFamily:"'Montserrat',sans-serif",lineHeight:1.6}}>Password must be at least 8 characters and include a number or special character.</div>
               <div style={{padding:"12px 16px",background:"#1a1200",border:"1px solid #3a2e00",borderRadius:8,fontSize:13,color:"#a08c40"}}>
