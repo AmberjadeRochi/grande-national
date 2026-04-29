@@ -107,7 +107,7 @@ export default function StudioPortal({ session, onLogout, notify }) {
       {/* Header */}
       <div style={{ background:"#0f0f0f", borderBottom:"1px solid #1e1e1e", padding:"16px 24px", display:"flex", alignItems:"center", justifyContent:"space-between", position:"sticky", top:0, zIndex:100 }}>
         <div>
-          <div style={{ fontSize:10, letterSpacing:"0.3em", color:"#8a7a4a", textTransform:"uppercase" }}>Studio Portal</div>
+          <div style={{ fontSize:10, letterSpacing:"0.3em", color:"#F27C20", textTransform:"uppercase" }}>Studio Portal</div>
           <div style={{ fontSize:18, marginTop:2 }}>{session.studio_name} <span style={{ fontSize:12, color:"#444" }}>· {session.studio_code}</span></div>
         </div>
         <button style={S.ghost("#666")} onClick={onLogout}>Logout</button>
@@ -117,10 +117,10 @@ export default function StudioPortal({ session, onLogout, notify }) {
         {/* Invoice summary */}
         <div style={{ ...S.card, marginBottom:24, display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))", gap:0, padding:0, overflow:"hidden" }}>
           {[
-            { label:"Dancers", value:dancers.length, sub:`R${inv.regFees} reg fees`, color:"#8a7a4a" },
-            { label:"Solo Entries", value:solos.length, sub:`R${inv.soloFees}`, color:"#c4713a" },
-            { label:"Group Entries", value:groups.length, sub:`R${inv.groupFees}`, color:"#c4713a" },
-            { label:"Estimated Total", value:`R${inv.total}`, sub:"excl. final invoice", color:"#b05060" },
+            { label:"Dancers", value:dancers.length, sub:`R${inv.regFees} reg fees`, color:"#F27C20" },
+            { label:"Solo Entries", value:solos.length, sub:`R${inv.soloFees}`, color:"#F27C20" },
+            { label:"Group Entries", value:groups.length, sub:`R${inv.groupFees}`, color:"#F27C20" },
+            { label:"Estimated Total", value:`R${inv.total}`, sub:"excl. final invoice", color:"#F27C20" },
           ].map((st,i,arr)=>(
             <div key={st.label} style={{ padding:"18px 20px", textAlign:"center", borderRight:i<arr.length-1?"1px solid #1e1e1e":"none" }}>
               <div style={{ fontSize:26, color:st.color, fontStyle:"italic" }}>{st.value}</div>
@@ -133,7 +133,7 @@ export default function StudioPortal({ session, onLogout, notify }) {
         {/* Tabs */}
         <div style={{ display:"flex", gap:4, marginBottom:24, background:"#141414", padding:4, borderRadius:10, border:"1px solid #1e1e1e" }}>
           {[["dancers","👥 Dancers"],["solos","🎭 Solos"],["groups","👯 Groups & Duos"]].map(([key,label])=>(
-            <button key={key} onClick={()=>setTab(key)} style={{ flex:1, padding:"10px", borderRadius:8, border:"none", background:tab===key?"#8a7a4a":"transparent", color:tab===key?"#0a0a0a":"#555", cursor:"pointer", fontFamily:"Georgia,serif", fontSize:14, fontWeight:tab===key?"bold":"normal", transition:"all .2s" }}>{label}</button>
+            <button key={key} onClick={()=>setTab(key)} style={{ flex:1, padding:"10px", borderRadius:8, border:"none", background:tab===key?"#F27C20":"transparent", color:tab===key?"#0a0a0a":"#555", cursor:"pointer", fontFamily:"Georgia,serif", fontSize:14, fontWeight:tab===key?"bold":"normal", transition:"all .2s" }}>{label}</button>
           ))}
         </div>
 
@@ -145,9 +145,9 @@ export default function StudioPortal({ session, onLogout, notify }) {
             {tab === "dancers" && (
               <div>
                 <div style={{ display:"flex", gap:10, marginBottom:16, flexWrap:"wrap" }}>
-                  <button style={S.btn("#8a7a4a")} onClick={()=>setShowAddDancer(true)}>+ Add Dancer</button>
-                  <button style={S.ghost("#8a7a4a")} onClick={downloadTemplate}>⬇ Download Excel Template</button>
-                  <label style={{ ...S.ghost("#8a7a4a"), cursor:"pointer" }}>
+                  <button style={S.btn("#F27C20")} onClick={()=>setShowAddDancer(true)}>+ Add Dancer</button>
+                  <button style={S.ghost("#F27C20")} onClick={downloadTemplate}>⬇ Download Excel Template</button>
+                  <label style={{ ...S.ghost("#F27C20"), cursor:"pointer" }}>
                     📥 Import Excel
                     <input type="file" accept=".xlsx,.xls" style={{display:"none"}} onChange={e=>{ if(e.target.files[0]) handleExcelImport(e.target.files[0]); e.target.value=""; }} />
                   </label>
@@ -167,15 +167,15 @@ export default function StudioPortal({ session, onLogout, notify }) {
                               {d.membership_code} · {d.gender} · Age {d.age} · {d.age_group}
                             </div>
                             <div style={{ display:"flex", gap:8, marginTop:8, flexWrap:"wrap" }}>
-                              <span style={S.tag("#8a7a4a")}>{dSolos.length} solo{dSolos.length!==1?"s":""}</span>
-                              <span style={S.tag("#c4713a")}>{dGroups.length} group entry/ies</span>
-                              <span style={S.tag("#c4713a")}>R{d.registration_fee} reg</span>
+                              <span style={S.tag("#F27C20")}>{dSolos.length} solo{dSolos.length!==1?"s":""}</span>
+                              <span style={S.tag("#F27C20")}>{dGroups.length} group entry/ies</span>
+                              <span style={S.tag("#F27C20")}>R{d.registration_fee} reg</span>
                             </div>
                           </div>
                           <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
-                            <button onClick={()=>setShowAddSolo(d)} style={S.ghost("#c4713a")}>+ Solo</button>
+                            <button onClick={()=>setShowAddSolo(d)} style={S.ghost("#F27C20")}>+ Solo</button>
                             <button onClick={()=>setShowEditDancer(d)} style={S.ghost("#666")}>Edit</button>
-                            <button onClick={async()=>{ if(!confirm(`Delete ${d.first_name}? This removes all their entries.`)) return; await supabase.from("dancers").delete().eq("id",d.id); await load(); notify(`${d.first_name} removed`); }} style={S.ghost("#b05060")}>✕</button>
+                            <button onClick={async()=>{ if(!confirm(`Delete ${d.first_name}? This removes all their entries.`)) return; await supabase.from("dancers").delete().eq("id",d.id); await load(); notify(`${d.first_name} removed`); }} style={S.ghost("#F27C20")}>✕</button>
                           </div>
                         </div>
                       );
@@ -189,7 +189,7 @@ export default function StudioPortal({ session, onLogout, notify }) {
             {tab === "solos" && (
               <div>
                 <div style={{ display:"flex", gap:10, marginBottom:16 }}>
-                  {dancers.length > 0 && <button style={S.btn("#c4713a")} onClick={()=>setShowAddSolo(dancers[0])}>+ Add Solo Entry</button>}
+                  {dancers.length > 0 && <button style={S.btn("#F27C20")} onClick={()=>setShowAddSolo(dancers[0])}>+ Add Solo Entry</button>}
                 </div>
                 {solos.length === 0 ? (
                   <div style={{ ...S.card, textAlign:"center", color:"#444", padding:48, fontStyle:"italic" }}>No solo entries yet. Go to Dancers tab to add solos per dancer.</div>
@@ -200,7 +200,7 @@ export default function StudioPortal({ session, onLogout, notify }) {
                       if (!genreSolos.length) return null;
                       return (
                         <div key={genre} style={{ marginBottom:24 }}>
-                          <div style={{ fontSize:11, letterSpacing:"0.15em", color:"#c4713a", textTransform:"uppercase", marginBottom:10 }}>{genre} ({genreSolos.length})</div>
+                          <div style={{ fontSize:11, letterSpacing:"0.15em", color:"#F27C20", textTransform:"uppercase", marginBottom:10 }}>{genre} ({genreSolos.length})</div>
                           <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
                             {genreSolos.map(s => {
                               const url = (s.file_path ? `https://xyezjpubmveizkzqbxue.supabase.co/storage/v1/object/public/mp3s/${s.file_path}` : null);
@@ -211,11 +211,11 @@ export default function StudioPortal({ session, onLogout, notify }) {
                                     <div style={{fontSize:12,color:"#888",marginTop:2}}>"{s.song_title}" · {s.age_group} · R{s.fee}</div>
                                   </div>
                                   <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                                    {url && <button onClick={()=>setPlayingUrl(p=>p===url?null:url)} style={{background:"#c4713a18",border:"none",borderRadius:6,padding:"6px 12px",color:"#c4713a",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center"}}>
+                                    {url && <button onClick={()=>setPlayingUrl(p=>p===url?null:url)} style={{background:"#F27C2018",border:"none",borderRadius:6,padding:"6px 12px",color:"#F27C20",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center"}}>
                                       {playingUrl===url?"⏸":"▶"}<AudioBars playing={playingUrl===url}/>
                                     </button>}
                                     <button onClick={()=>setShowEditSolo(s)} style={S.ghost("#666")}>Edit</button>
-                                    <button onClick={async()=>{ if(!confirm("Delete this solo entry?")) return; await supabase.from("solo_entries").delete().eq("id",s.id); await load(); notify("Solo removed"); }} style={S.ghost("#b05060")}>✕</button>
+                                    <button onClick={async()=>{ if(!confirm("Delete this solo entry?")) return; await supabase.from("solo_entries").delete().eq("id",s.id); await load(); notify("Solo removed"); }} style={S.ghost("#F27C20")}>✕</button>
                                   </div>
                                 </div>
                               );
@@ -233,7 +233,7 @@ export default function StudioPortal({ session, onLogout, notify }) {
             {tab === "groups" && (
               <div>
                 <div style={{ display:"flex", gap:10, marginBottom:16 }}>
-                  <button style={S.btn("#c4713a")} onClick={()=>setShowAddGroup(true)}>+ Add Group / Duo</button>
+                  <button style={S.btn("#F27C20")} onClick={()=>setShowAddGroup(true)}>+ Add Group / Duo</button>
                 </div>
                 {groups.length === 0 ? (
                   <div style={{ ...S.card, textAlign:"center", color:"#444", padding:48, fontStyle:"italic" }}>No group or duo entries yet.</div>
@@ -248,20 +248,20 @@ export default function StudioPortal({ session, onLogout, notify }) {
                             <div style={{flex:1}}>
                               <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
                                 <div style={{fontWeight:"bold",fontSize:16}}>{g.group_name}</div>
-                                <span style={S.tag("#c4713a")}>{g.group_type}</span>
-                                <span style={S.tag("#c4713a")}>{g.genre}</span>
+                                <span style={S.tag("#F27C20")}>{g.group_type}</span>
+                                <span style={S.tag("#F27C20")}>{g.genre}</span>
                               </div>
                               <div style={{fontSize:12,color:"#888",marginTop:4}}>"{g.song_title}" · {g.age_group} · {g.member_count} dancers · R{g.total_fee} total</div>
-                              <button onClick={()=>setShowGroupMembers(g)} style={{...S.ghost("#c4713a"),padding:"4px 12px",fontSize:12,marginTop:10}}>
+                              <button onClick={()=>setShowGroupMembers(g)} style={{...S.ghost("#F27C20"),padding:"4px 12px",fontSize:12,marginTop:10}}>
                                 👥 View {members.length} member{members.length!==1?"s":""}
                               </button>
                             </div>
                             <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
-                              {url && <button onClick={()=>setPlayingUrl(p=>p===url?null:url)} style={{background:"#c4713a18",border:"none",borderRadius:6,padding:"6px 12px",color:"#c4713a",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center"}}>
+                              {url && <button onClick={()=>setPlayingUrl(p=>p===url?null:url)} style={{background:"#F27C2018",border:"none",borderRadius:6,padding:"6px 12px",color:"#F27C20",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center"}}>
                                 {playingUrl===url?"⏸":"▶"}<AudioBars playing={playingUrl===url}/>
                               </button>}
                               <button onClick={()=>setShowEditGroup(g)} style={S.ghost("#666")}>Edit</button>
-                              <button onClick={async()=>{ if(!confirm(`Delete group "${g.group_name}"?`)) return; await supabase.from("group_entries").delete().eq("id",g.id); await load(); notify("Group removed"); }} style={S.ghost("#b05060")}>✕</button>
+                              <button onClick={async()=>{ if(!confirm(`Delete group "${g.group_name}"?`)) return; await supabase.from("group_entries").delete().eq("id",g.id); await load(); notify("Group removed"); }} style={S.ghost("#F27C20")}>✕</button>
                             </div>
                           </div>
                         </div>
@@ -298,7 +298,7 @@ function AddDancerModal({ session, onClose, onSave, notify }) {
   const ageGroup = age !== null ? calcAgeGroup(age) : "";
 
   const save = async () => {
-    if (!form.first_name||!form.last_name||!form.date_of_birth||!form.gender) { notify("All fields are required","#c0392b"); return; }
+    if (!form.first_name.trim()||!form.last_name.trim()||!form.date_of_birth||!form.gender) { notify("All fields are required","#c0392b"); return; }
     setLoading(true);
     try {
       const code = membershipCode(session.studio_code, form.first_name, form.last_name, form.date_of_birth);
@@ -309,21 +309,21 @@ function AddDancerModal({ session, onClose, onSave, notify }) {
   };
 
   return (
-    <Modal title="Add Dancer" onClose={onClose} color="#8a7a4a">
+    <Modal title="Add Dancer" onClose={onClose} color="#F27C20">
       <div style={{display:"flex",flexDirection:"column",gap:14}}>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
           <div><label style={S.label}>First Name *</label><input style={S.input} value={form.first_name} onChange={e=>set("first_name",e.target.value)} placeholder="Sofia" /></div>
           <div><label style={S.label}>Last Name *</label><input style={S.input} value={form.last_name} onChange={e=>set("last_name",e.target.value)} placeholder="Martini" /></div>
         </div>
         <div><label style={S.label}>Date of Birth *</label><input style={S.input} type="date" value={form.date_of_birth} onChange={e=>set("date_of_birth",e.target.value)} /></div>
-        {age !== null && <div style={{padding:"8px 12px",background:"#8a7a4a18",borderRadius:8,fontSize:13,color:"#8a7a4a"}}>Age: {age} · {ageGroup}</div>}
+        {age !== null && <div style={{padding:"8px 12px",background:"#F27C2018",borderRadius:8,fontSize:13,color:"#F27C20"}}>Age: {age} · {ageGroup}</div>}
         <div><label style={S.label}>Gender *</label>
           <select style={S.select} value={form.gender} onChange={e=>set("gender",e.target.value)}>
             <option>Female</option><option>Male</option>
           </select>
         </div>
         <div style={{padding:"8px 12px",background:"#1a1200",borderRadius:8,fontSize:12,color:"#a08c40"}}>Registration fee: R{PRICING.registration} (once-off per dancer)</div>
-        <button style={S.btn("#8a7a4a")} onClick={save} disabled={loading}>{loading?<Spinner color="#0a0a0a"/>:"Add Dancer"}</button>
+        <button style={S.btn("#F27C20")} onClick={save} disabled={loading}>{loading?<Spinner color="#0a0a0a"/>:"Add Dancer"}</button>
       </div>
     </Modal>
   );
@@ -345,20 +345,20 @@ function EditDancerModal({ dancer, onClose, onSave, notify }) {
   };
 
   return (
-    <Modal title="Edit Dancer" onClose={onClose} color="#8a7a4a">
+    <Modal title="Edit Dancer" onClose={onClose} color="#F27C20">
       <div style={{display:"flex",flexDirection:"column",gap:14}}>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
           <div><label style={S.label}>First Name</label><input style={S.input} value={form.first_name} onChange={e=>set("first_name",e.target.value)} /></div>
           <div><label style={S.label}>Last Name</label><input style={S.input} value={form.last_name} onChange={e=>set("last_name",e.target.value)} /></div>
         </div>
         <div><label style={S.label}>Date of Birth</label><input style={S.input} type="date" value={form.date_of_birth} onChange={e=>set("date_of_birth",e.target.value)} /></div>
-        {age !== null && <div style={{padding:"8px 12px",background:"#8a7a4a18",borderRadius:8,fontSize:13,color:"#8a7a4a"}}>Age: {age} · {ageGroup}</div>}
+        {age !== null && <div style={{padding:"8px 12px",background:"#F27C2018",borderRadius:8,fontSize:13,color:"#F27C20"}}>Age: {age} · {ageGroup}</div>}
         <div><label style={S.label}>Gender</label>
           <select style={S.select} value={form.gender} onChange={e=>set("gender",e.target.value)}>
             <option>Female</option><option>Male</option>
           </select>
         </div>
-        <button style={S.btn("#8a7a4a")} onClick={save} disabled={loading}>{loading?<Spinner color="#0a0a0a"/>:"Save Changes"}</button>
+        <button style={S.btn("#F27C20")} onClick={save} disabled={loading}>{loading?<Spinner color="#0a0a0a"/>:"Save Changes"}</button>
       </div>
     </Modal>
   );
@@ -373,7 +373,7 @@ function AddSoloModal({ dancer: initialDancer, dancers, session, onClose, onSave
   const dancer = dancers.find(d=>d.id===selectedDancerId) || initialDancer;
 
   const save = async () => {
-    if (!dancer||!form.genre||!form.song_title||!form.file) { notify("Please fill all fields and select a music file","#c0392b"); return; }
+    if (!dancer||!form.genre||!form.song_title.trim()||!form.file) { notify("All fields are required — please fill in dancer, genre, song title and upload a music file","#c0392b"); return; }
     setLoading(true);
     try {
       const path = `${session.studio_code}/solos/${dancer.id}_${form.genre}_${Date.now()}_${form.file.name}`;
@@ -391,7 +391,7 @@ function AddSoloModal({ dancer: initialDancer, dancers, session, onClose, onSave
   };
 
   return (
-    <Modal title="Add Solo Entry" onClose={onClose} color="#c4713a">
+    <Modal title="Add Solo Entry" onClose={onClose} color="#F27C20">
       <div style={{display:"flex",flexDirection:"column",gap:14}}>
         <div><label style={S.label}>Dancer *</label>
           <select style={S.select} value={selectedDancerId} onChange={e=>setSelectedDancerId(e.target.value)}>
@@ -399,7 +399,7 @@ function AddSoloModal({ dancer: initialDancer, dancers, session, onClose, onSave
             {dancers.map(d=><option key={d.id} value={d.id}>{d.first_name} {d.last_name}</option>)}
           </select>
         </div>
-        {dancer && <div style={{padding:"8px 12px",background:"#c4713a18",borderRadius:8,fontSize:12,color:"#c4713a"}}>Age group: {dancer.age_group.replace(" – Ballet/Rep point shoes optional","").replace(" – Ballet/Rep Pointe shoes optional","")}</div>}
+        {dancer && <div style={{padding:"8px 12px",background:"#F27C2018",borderRadius:8,fontSize:12,color:"#F27C20"}}>Age group: {dancer.age_group.replace(" – Ballet/Rep point shoes optional","").replace(" – Ballet/Rep Pointe shoes optional","")}</div>}
         <div><label style={S.label}>Genre *</label>
           <select style={S.select} value={form.genre} onChange={e=>set("genre",e.target.value)}>
             {GENRES.map(g=><option key={g}>{g}</option>)}
@@ -410,17 +410,17 @@ function AddSoloModal({ dancer: initialDancer, dancers, session, onClose, onSave
           <label style={S.label}>MP3 / Music File *</label>
           <div onClick={()=>document.getElementById("soloFile").click()} style={{border:"2px dashed #2e2e2e",borderRadius:10,padding:20,textAlign:"center",cursor:"pointer",background:"#1c1c1c"}}>
             <input id="soloFile" type="file" accept=".mp3,.wav,.m4a,audio/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f)set("file",f);set("fileName",f?.name||"");}} />
-            {form.fileName?<div style={{color:"#c4713a"}}>🎵 {form.fileName}</div>:<div style={{color:"#444",fontSize:13}}>📁 Click to select music file (MP3, WAV, M4A)</div>}
+            {form.fileName?<div style={{color:"#F27C20"}}>🎵 {form.fileName}</div>:<div style={{color:"#444",fontSize:13}}>📁 Click to select music file (MP3, WAV, M4A)</div>}
           </div>
         </div>
         <div style={{padding:"12px 14px",background:"#1a1200",border:"1px solid #3a2e00",borderRadius:8,fontSize:12,color:"#a08c40",lineHeight:1.8}}>
           <div>Fee: <strong>R{PRICING.solo}</strong> per solo entry</div>
           {dancer && (form.genre==="Ballet"||form.genre==="Repertoire") && dancer.age_group==="Children (10–12)" && (
-            <div style={{marginTop:4,color:"#c4713a"}}>🩰 Ages 10–12 Ballet/Repertoire — Pointe shoes optional</div>
+            <div style={{marginTop:4,color:"#F27C20"}}>🩰 Ages 10–12 Ballet/Repertoire — Pointe shoes optional</div>
           )}
           <div style={{marginTop:4,fontSize:11,color:"#666"}}>*Please wait for final invoice before making payment</div>
         </div>
-        <button style={S.btn("#c4713a")} onClick={save} disabled={loading}>{loading?<Spinner color="#0a0a0a"/>:"Add Solo Entry"}</button>
+        <button style={S.btn("#F27C20")} onClick={save} disabled={loading}>{loading?<Spinner color="#0a0a0a"/>:"Add Solo Entry"}</button>
       </div>
     </Modal>
   );
@@ -449,9 +449,9 @@ function EditSoloModal({ solo, onClose, onSave, notify }) {
   };
 
   return (
-    <Modal title="Edit Solo Entry" onClose={onClose} color="#c4713a">
+    <Modal title="Edit Solo Entry" onClose={onClose} color="#F27C20">
       <div style={{display:"flex",flexDirection:"column",gap:14}}>
-        <div style={{padding:"8px 12px",background:"#c4713a18",borderRadius:8,fontSize:13,color:"#c4713a"}}>Dancer: {solo.dancer_name}</div>
+        <div style={{padding:"8px 12px",background:"#F27C2018",borderRadius:8,fontSize:13,color:"#F27C20"}}>Dancer: {solo.dancer_name}</div>
         <div><label style={S.label}>Genre</label>
           <select style={S.select} value={form.genre} onChange={e=>set("genre",e.target.value)}>
             {GENRES.map(g=><option key={g}>{g}</option>)}
@@ -462,10 +462,10 @@ function EditSoloModal({ solo, onClose, onSave, notify }) {
           <label style={S.label}>Replace Music File (optional)</label>
           <div onClick={()=>document.getElementById("editSoloFile").click()} style={{border:"2px dashed #2e2e2e",borderRadius:10,padding:20,textAlign:"center",cursor:"pointer",background:"#1c1c1c"}}>
             <input id="editSoloFile" type="file" accept=".mp3,.wav,.m4a,audio/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f){set("file",f);set("fileName",f.name);}}} />
-            {form.fileName?<div style={{color:"#c4713a"}}>🎵 {form.fileName}</div>:<div style={{color:"#444",fontSize:13}}>Current: {solo.file_name}<br/><span style={{fontSize:11}}>Click to replace</span></div>}
+            {form.fileName?<div style={{color:"#F27C20"}}>🎵 {form.fileName}</div>:<div style={{color:"#444",fontSize:13}}>Current: {solo.file_name}<br/><span style={{fontSize:11}}>Click to replace</span></div>}
           </div>
         </div>
-        <button style={S.btn("#c4713a")} onClick={save} disabled={loading}>{loading?<Spinner color="#0a0a0a"/>:"Save Changes"}</button>
+        <button style={S.btn("#F27C20")} onClick={save} disabled={loading}>{loading?<Spinner color="#0a0a0a"/>:"Save Changes"}</button>
       </div>
     </Modal>
   );
@@ -488,7 +488,7 @@ function AddGroupModal({ dancers, session, onClose, onSave, notify }) {
   };
 
   const save = async () => {
-    if (!form.group_name||!form.genre||!form.song_title||!form.age_group||selectedMembers.length<2||!form.file) { notify("Please fill all fields, select 2+ dancers and upload music","#c0392b"); return; }
+    if (!form.group_name.trim()||!form.genre||!form.song_title.trim()||!form.age_group||selectedMembers.length<2||!form.file) { notify("All fields are required — fill in group name, genre, song title, age group, select 2+ dancers and upload music","#c0392b"); return; }
     setLoading(true);
     try {
       const path = `${session.studio_code}/groups/${form.group_name.replace(/\s/g,"_")}_${Date.now()}_${form.file.name}`;
@@ -510,7 +510,7 @@ function AddGroupModal({ dancers, session, onClose, onSave, notify }) {
   };
 
   return (
-    <Modal title="Add Group / Duo Entry" onClose={onClose} color="#c4713a">
+    <Modal title="Add Group / Duo Entry" onClose={onClose} color="#F27C20">
       <div style={{display:"flex",flexDirection:"column",gap:14}}>
         <div><label style={S.label}>Group / Duo Name *</label><input style={S.input} value={form.group_name} onChange={e=>set("group_name",e.target.value)} placeholder="e.g. Leap Stars" /></div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
@@ -533,16 +533,16 @@ function AddGroupModal({ dancers, session, onClose, onSave, notify }) {
             {dancers.map(d=>{
               const sel = !!selectedMembers.find(m=>m.id===d.id);
               return (
-                <div key={d.id} onClick={()=>toggleMember(d)} style={{padding:"10px 14px",borderRadius:8,border:`1px solid ${sel?"#c4713a":"#2e2e2e"}`,background:sel?"#c4713a18":"#1c1c1c",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <div key={d.id} onClick={()=>toggleMember(d)} style={{padding:"10px 14px",borderRadius:8,border:`1px solid ${sel?"#F27C20":"#2e2e2e"}`,background:sel?"#F27C2018":"#1c1c1c",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                   <span>{d.first_name} {d.last_name} <span style={{fontSize:11,color:"#555"}}>· {d.age_group}</span></span>
-                  {sel&&<span style={{color:"#c4713a"}}>✓</span>}
+                  {sel&&<span style={{color:"#F27C20"}}>✓</span>}
                 </div>
               );
             })}
           </div>
         </div>
         {memberCount >= 2 && (
-          <div style={{padding:"10px 14px",background:"#c4713a18",borderRadius:8,fontSize:13,color:"#c4713a"}}>
+          <div style={{padding:"10px 14px",background:"#F27C2018",borderRadius:8,fontSize:13,color:"#F27C20"}}>
             {memberCount} dancers · {gType} · R{feePerPerson}pp · <strong>Total: R{totalFee}</strong>
           </div>
         )}
@@ -550,10 +550,10 @@ function AddGroupModal({ dancers, session, onClose, onSave, notify }) {
           <label style={S.label}>Music File *</label>
           <div onClick={()=>document.getElementById("groupFile").click()} style={{border:"2px dashed #2e2e2e",borderRadius:10,padding:20,textAlign:"center",cursor:"pointer",background:"#1c1c1c"}}>
             <input id="groupFile" type="file" accept=".mp3,.wav,.m4a,audio/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f){set("file",f);set("fileName",f.name);}}} />
-            {form.fileName?<div style={{color:"#c4713a"}}>🎵 {form.fileName}</div>:<div style={{color:"#444",fontSize:13}}>📁 Click to select music file</div>}
+            {form.fileName?<div style={{color:"#F27C20"}}>🎵 {form.fileName}</div>:<div style={{color:"#444",fontSize:13}}>📁 Click to select music file</div>}
           </div>
         </div>
-        <button style={S.btn("#c4713a")} onClick={save} disabled={loading}>{loading?<Spinner color="#fff"/>:"Add Group Entry"}</button>
+        <button style={S.btn("#F27C20")} onClick={save} disabled={loading}>{loading?<Spinner color="#fff"/>:"Add Group Entry"}</button>
       </div>
     </Modal>
   );
@@ -592,7 +592,7 @@ function EditGroupModal({ group, dancers, groupMembers, onClose, onSave, notify 
   };
 
   return (
-    <Modal title="Edit Group Entry" onClose={onClose} color="#c4713a">
+    <Modal title="Edit Group Entry" onClose={onClose} color="#F27C20">
       <div style={{display:"flex",flexDirection:"column",gap:14}}>
         <div><label style={S.label}>Group Name</label><input style={S.input} value={form.group_name} onChange={e=>set("group_name",e.target.value)} /></div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
@@ -605,21 +605,21 @@ function EditGroupModal({ group, dancers, groupMembers, onClose, onSave, notify 
           <div style={{maxHeight:180,overflowY:"auto",display:"flex",flexDirection:"column",gap:6}}>
             {dancers.map(d=>{
               const sel=!!selectedMembers.find(m=>m.id===d.id);
-              return <div key={d.id} onClick={()=>toggleMember(d)} style={{padding:"9px 14px",borderRadius:8,border:`1px solid ${sel?"#c4713a":"#2e2e2e"}`,background:sel?"#c4713a18":"#1c1c1c",cursor:"pointer",display:"flex",justifyContent:"space-between"}}>
-                <span>{d.first_name} {d.last_name}</span>{sel&&<span style={{color:"#c4713a"}}>✓</span>}
+              return <div key={d.id} onClick={()=>toggleMember(d)} style={{padding:"9px 14px",borderRadius:8,border:`1px solid ${sel?"#F27C20":"#2e2e2e"}`,background:sel?"#F27C2018":"#1c1c1c",cursor:"pointer",display:"flex",justifyContent:"space-between"}}>
+                <span>{d.first_name} {d.last_name}</span>{sel&&<span style={{color:"#F27C20"}}>✓</span>}
               </div>;
             })}
           </div>
         </div>
-        {memberCount>=2&&<div style={{padding:"8px 12px",background:"#c4713a18",borderRadius:8,fontSize:13,color:"#c4713a"}}>{memberCount} dancers · {gType} · R{feePerPerson}pp · Total: R{totalFee}</div>}
+        {memberCount>=2&&<div style={{padding:"8px 12px",background:"#F27C2018",borderRadius:8,fontSize:13,color:"#F27C20"}}>{memberCount} dancers · {gType} · R{feePerPerson}pp · Total: R{totalFee}</div>}
         <div>
           <label style={S.label}>Replace Music (optional)</label>
           <div onClick={()=>document.getElementById("editGroupFile").click()} style={{border:"2px dashed #2e2e2e",borderRadius:10,padding:16,textAlign:"center",cursor:"pointer",background:"#1c1c1c"}}>
             <input id="editGroupFile" type="file" accept=".mp3,.wav,.m4a,audio/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f){set("file",f);set("fileName",f.name);}}} />
-            {form.fileName?<div style={{color:"#c4713a"}}>🎵 {form.fileName}</div>:<div style={{color:"#444",fontSize:12}}>Current: {group.file_name} · Click to replace</div>}
+            {form.fileName?<div style={{color:"#F27C20"}}>🎵 {form.fileName}</div>:<div style={{color:"#444",fontSize:12}}>Current: {group.file_name} · Click to replace</div>}
           </div>
         </div>
-        <button style={S.btn("#c4713a")} onClick={save} disabled={loading}>{loading?<Spinner color="#fff"/>:"Save Changes"}</button>
+        <button style={S.btn("#F27C20")} onClick={save} disabled={loading}>{loading?<Spinner color="#fff"/>:"Save Changes"}</button>
       </div>
     </Modal>
   );
@@ -628,14 +628,14 @@ function EditGroupModal({ group, dancers, groupMembers, onClose, onSave, notify 
 // ── GROUP MEMBERS VIEWER ──
 function GroupMembersModal({ group, members, onClose }) {
   return (
-    <Modal title={`${group.group_name} — Members`} onClose={onClose} color="#c4713a">
+    <Modal title={`${group.group_name} — Members`} onClose={onClose} color="#F27C20">
       <div style={{display:"flex",flexDirection:"column",gap:8}}>
-        <div style={{padding:"8px 12px",background:"#c4713a18",borderRadius:8,fontSize:13,color:"#c4713a",marginBottom:4}}>
+        <div style={{padding:"8px 12px",background:"#F27C2018",borderRadius:8,fontSize:13,color:"#F27C20",marginBottom:4}}>
           {group.group_type} · {group.genre} · {group.member_count} dancers
         </div>
         {members.map((m,i)=>(
           <div key={m.id} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",background:"#1c1c1c",borderRadius:8,border:"1px solid #242424"}}>
-            <div style={{width:28,height:28,borderRadius:"50%",background:"#c4713a22",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:"#c4713a",fontWeight:"bold"}}>{i+1}</div>
+            <div style={{width:28,height:28,borderRadius:"50%",background:"#c4713a22",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:"#F27C20",fontWeight:"bold"}}>{i+1}</div>
             <div>
               <div style={{fontWeight:"bold"}}>{m.dancer_name}</div>
               <div style={{fontSize:11,color:"#555"}}>{m.membership_code}</div>
