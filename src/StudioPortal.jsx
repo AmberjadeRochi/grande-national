@@ -293,18 +293,19 @@ export default function StudioPortal({ session, onLogout, notify }) {
 function AddDancerModal({ session, onClose, onSave, notify }) {
   const [form, setForm] = useState({ first_name:"", last_name:"", date_of_birth:"", gender:"Female" });
   const [loading, setLoading] = useState(false);
-  const set = (k,v) => setForm(p=>({...p,[k]:v}));
+  const [error, setError] = useState("");
+  const set = (k,v) => { setForm(p=>({...p,[k]:v})); setError(""); };
   const age = form.date_of_birth ? calcAge(form.date_of_birth) : null;
   const ageGroup = age !== null ? calcAgeGroup(age) : "";
 
   const save = async () => {
-    if (!form.first_name.trim()||!form.last_name.trim()||!form.date_of_birth||!form.gender) { notify("All fields are required","#c0392b"); return; }
+    if (!form.first_name.trim()||!form.last_name.trim()||!form.date_of_birth||!form.gender) { setError("All fields are required."); return; }
     setLoading(true);
     try {
       const code = membershipCode(session.studio_code, form.first_name, form.last_name, form.date_of_birth);
       const {error} = await supabase.from("dancers").insert({ ...form, age, age_group:ageGroup, studio_code:session.studio_code, studio_name:session.studio_name, membership_code:code, registration_fee:PRICING.registration }); if(error) throw error;
       onSave();
-    } catch(e) { notify(e.message.includes("duplicate")?"Dancer already exists":e.message,"#c0392b"); }
+    } catch(e) { setError(e.message.includes("duplicate")?"This dancer already exists in your studio.":e.message); }
     setLoading(false);
   };
 
@@ -369,11 +370,12 @@ function AddSoloModal({ dancer: initialDancer, dancers, session, onClose, onSave
   const [selectedDancerId, setSelectedDancerId] = useState(initialDancer?.id || "");
   const [form, setForm] = useState({ genre:"Contemporary", song_title:"", file:null, fileName:"" });
   const [loading, setLoading] = useState(false);
-  const set = (k,v) => setForm(p=>({...p,[k]:v}));
+  const [error, setError] = useState("");
+  const set = (k,v) => { setForm(p=>({...p,[k]:v})); setError(""); };
   const dancer = dancers.find(d=>d.id===selectedDancerId) || initialDancer;
 
   const save = async () => {
-    if (!dancer||!form.genre||!form.song_title.trim()||!form.file) { notify("All fields are required — please fill in dancer, genre, song title and upload a music file","#c0392b"); return; }
+    if (!dancer||!form.genre||!form.song_title.trim()||!form.file) { setError("All fields are required. Please select a dancer, genre, song title and upload a music file."); return; }
     setLoading(true);
     try {
       const path = `${session.studio_code}/solos/${dancer.id}_${form.genre}_${Date.now()}_${form.file.name}`;
@@ -476,6 +478,7 @@ function AddGroupModal({ dancers, session, onClose, onSave, notify }) {
   const [form, setForm] = useState({ group_name:"", genre:"Contemporary", song_title:"", age_group:"Mini (7–9)", file:null, fileName:"" });
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const set = (k,v) => setForm(p=>({...p,[k]:v}));
 
   const memberCount = selectedMembers.length;
@@ -488,7 +491,7 @@ function AddGroupModal({ dancers, session, onClose, onSave, notify }) {
   };
 
   const save = async () => {
-    if (!form.group_name.trim()||!form.genre||!form.song_title.trim()||!form.age_group||selectedMembers.length<2||!form.file) { notify("All fields are required — fill in group name, genre, song title, age group, select 2+ dancers and upload music","#c0392b"); return; }
+    if (!form.group_name.trim()||!form.genre||!form.song_title.trim()||!form.age_group||selectedMembers.length<2||!form.file) { setError("All fields are required. Fill in group name, genre, song title, age group, select at least 2 dancers and upload music."); return; }
     setLoading(true);
     try {
       const path = `${session.studio_code}/groups/${form.group_name.replace(/\s/g,"_")}_${Date.now()}_${form.file.name}`;
