@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-import { supabase, S, Spinner, AudioBars, GENRES, PRICING } from "./App.jsx";
+import { supabase, S, Spinner, AudioBars, GENRES, PRICING, C } from "./App.jsx";
 import * as XLSX from "xlsx";
 
-const ADMIN_PASSWORD = "ROSEROCK@2532str!";
+const ADMIN_PASSWORD = "ROSEROCK@2532str!"; // Change this to your password
 
 export default function AdminDashboard({ onBack, notify }) {
   const [authed, setAuthed] = useState(false);
@@ -127,12 +127,12 @@ export default function AdminDashboard({ onBack, notify }) {
     <div style={S.app}>
       <div style={{ maxWidth:400, margin:"0 auto", padding:"120px 24px" }}>
         <button style={S.back} onClick={onBack}>← Back</button>
-        <div style={{ fontSize:10, letterSpacing:"0.4em", color:"#ff6b6b", textTransform:"uppercase", marginBottom:10 }}>Restricted</div>
+        <div style={{ fontSize:10, letterSpacing:"0.4em", color:"#b05060", textTransform:"uppercase", marginBottom:10 }}>Restricted</div>
         <h2 style={{ fontSize:28, fontWeight:"normal", margin:"0 0 28px" }}>Admin Login</h2>
         <div style={S.card}>
           <label style={S.label}>Admin Password</label>
           <input style={S.input} type="password" value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==="Enter"&&(pw===ADMIN_PASSWORD?setAuthed(true):notify("Incorrect password","#c0392b"))} placeholder="••••••••" />
-          <button style={{...S.btn("#ff6b6b"),marginTop:16,width:"100%"}} onClick={()=>pw===ADMIN_PASSWORD?setAuthed(true):notify("Incorrect password","#c0392b")}>Enter Dashboard →</button>
+          <button style={{...S.btn("#b05060"),marginTop:16,width:"100%"}} onClick={()=>pw===ADMIN_PASSWORD?setAuthed(true):notify("Incorrect password","#c0392b")}>Enter Dashboard →</button>
         </div>
       </div>
     </div>
@@ -146,7 +146,7 @@ export default function AdminDashboard({ onBack, notify }) {
       <audio ref={audioRef} onEnded={()=>setPlayingUrl(null)} />
       <div style={{ background:"#0f0f0f", borderBottom:"1px solid #1e1e1e", padding:"16px 24px", display:"flex", alignItems:"center", justifyContent:"space-between", position:"sticky", top:0, zIndex:100 }}>
         <div>
-          <div style={{ fontSize:10, letterSpacing:"0.3em", color:"#ff6b6b", textTransform:"uppercase" }}>Admin Dashboard</div>
+          <div style={{ fontSize:10, letterSpacing:"0.3em", color:"#b05060", textTransform:"uppercase" }}>Admin Dashboard</div>
           <div style={{ fontSize:18, marginTop:2 }}>Grande National HQ</div>
         </div>
         <div style={{ display:"flex", gap:8 }}>
@@ -158,10 +158,10 @@ export default function AdminDashboard({ onBack, notify }) {
       <div style={{ maxWidth:1100, margin:"0 auto", padding:"32px 24px" }}>
         <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))", gap:12, marginBottom:28 }}>
           {[
-            {label:"Studios",value:studios.filter(s=>s.status==="approved").length,sub:`${studios.filter(s=>s.status==="pending").length} pending`,color:"#a78bfa"},
-            {label:"Dancers",value:dancers.length,sub:`R${totalReg} reg fees`,color:"#4ecdc4"},
-            {label:"Solos",value:solos.length,sub:`R${totalSolo}`,color:"#e8c547"},
-            {label:"Groups/Duos",value:groups.length,sub:`R${totalGroup}`,color:"#ff6b6b"},
+            {label:"Studios",value:studios.filter(s=>s.status==="approved").length,sub:`${studios.filter(s=>s.status==="pending").length} pending`,color:"#c4713a"},
+            {label:"Dancers",value:dancers.length,sub:`R${totalReg} reg fees`,color:"#8a7a4a"},
+            {label:"Solos",value:solos.length,sub:`R${totalSolo}`,color:"#c4713a"},
+            {label:"Groups/Duos",value:groups.length,sub:`R${totalGroup}`,color:"#b05060"},
             {label:"Est. Revenue",value:`R${totalReg+totalSolo+totalGroup}`,sub:"estimates only",color:"#a8e6cf"},
           ].map(st=>(
             <div key={st.label} style={{...S.card,padding:"16px 18px",textAlign:"center"}}>
@@ -173,13 +173,13 @@ export default function AdminDashboard({ onBack, notify }) {
         </div>
 
         <div style={{ display:"flex", gap:10, marginBottom:24, flexWrap:"wrap" }}>
-          <button onClick={exportMaster} style={S.btn("#ff6b6b")}>⬇ Master Export</button>
-          <button onClick={exportRunningOrder} style={S.btn("#e8c547")}>⬇ Running Order by Genre</button>
+          <button onClick={exportMaster} style={S.btn("#b05060")}>⬇ Master Export</button>
+          <button onClick={exportRunningOrder} style={S.btn("#c4713a")}>⬇ Running Order by Genre</button>
         </div>
 
         <div style={{ display:"flex", gap:4, marginBottom:24, background:"#141414", padding:4, borderRadius:10, border:"1px solid #1e1e1e" }}>
           {[["studios","🏫 Studios"],["dancers","👥 Dancers"],["solos","🎭 Solos"],["groups","👯 Groups & Duos"],["invoices","💰 Invoices"]].map(([key,label])=>(
-            <button key={key} onClick={()=>setTab(key)} style={{ flex:1, padding:"10px 6px", borderRadius:8, border:"none", background:tab===key?"#ff6b6b":"transparent", color:tab===key?"#fff":"#555", cursor:"pointer", fontFamily:"Georgia,serif", fontSize:13, fontWeight:tab===key?"bold":"normal", transition:"all .2s" }}>{label}</button>
+            <button key={key} onClick={()=>setTab(key)} style={{ flex:1, padding:"10px 6px", borderRadius:8, border:"none", background:tab===key?"#b05060":"transparent", color:tab===key?"#fff":"#555", cursor:"pointer", fontFamily:"Georgia,serif", fontSize:13, fontWeight:tab===key?"bold":"normal", transition:"all .2s" }}>{label}</button>
           ))}
         </div>
 
@@ -195,7 +195,7 @@ export default function AdminDashboard({ onBack, notify }) {
                   if (!list.length) return null;
                   return (
                     <div key={status}>
-                      <div style={{fontSize:11,letterSpacing:"0.15em",color:status==="approved"?"#4ecdc4":status==="pending"?"#e8c547":"#ff6b6b",textTransform:"uppercase",marginBottom:10,marginTop:8}}>
+                      <div style={{fontSize:11,letterSpacing:"0.15em",color:status==="approved"?"#8a7a4a":status==="pending"?"#c4713a":"#b05060",textTransform:"uppercase",marginBottom:10,marginTop:8}}>
                         {status} ({list.length})
                       </div>
                       {list.map(s=>(
@@ -208,12 +208,12 @@ export default function AdminDashboard({ onBack, notify }) {
                                 📍 {s.studio_address||"—"}<br/>
                                 👤 {s.studio_owner_name||"—"} · {s.studio_owner_contact_nr||"—"}
                               </div>
-                              <div style={{marginTop:8}}><span style={S.tag(status==="approved"?"#4ecdc4":status==="pending"?"#e8c547":"#ff6b6b")}>{status}</span></div>
+                              <div style={{marginTop:8}}><span style={S.tag(status==="approved"?"#8a7a4a":status==="pending"?"#c4713a":"#b05060")}>{status}</span></div>
                             </div>
                             {status==="pending" && (
                               <div style={{display:"flex",gap:8,flexShrink:0}}>
-                                <button onClick={()=>approveStudio(s)} style={S.btn("#4ecdc4")}>✓ Approve</button>
-                                <button onClick={()=>rejectStudio(s)} style={S.ghost("#ff6b6b")}>✕ Reject</button>
+                                <button onClick={()=>approveStudio(s)} style={S.btn("#8a7a4a")}>✓ Approve</button>
+                                <button onClick={()=>rejectStudio(s)} style={S.ghost("#b05060")}>✕ Reject</button>
                               </div>
                             )}
                           </div>
@@ -244,9 +244,9 @@ export default function AdminDashboard({ onBack, notify }) {
                             <div style={{fontWeight:"bold"}}>{d.first_name} {d.last_name} <span style={{fontSize:12,color:"#555"}}>· {d.membership_code}</span></div>
                             <div style={{fontSize:12,color:"#666",marginTop:3}}>{d.studio_name} · {d.gender} · Age {d.age} · {d.age_group}</div>
                             <div style={{display:"flex",gap:8,marginTop:8,flexWrap:"wrap"}}>
-                              <span style={S.tag("#4ecdc4")}>{ds.length} solos</span>
-                              <span style={S.tag("#a78bfa")}>{dg.length} groups</span>
-                              <span style={S.tag("#e8c547")}>Est. R{d.registration_fee+sf+gf}</span>
+                              <span style={S.tag("#8a7a4a")}>{ds.length} solos</span>
+                              <span style={S.tag("#c4713a")}>{dg.length} groups</span>
+                              <span style={S.tag("#c4713a")}>Est. R{d.registration_fee+sf+gf}</span>
                             </div>
                           </div>
                         </div>
@@ -275,7 +275,7 @@ export default function AdminDashboard({ onBack, notify }) {
                   if (!items.length) return null;
                   return (
                     <div key={genre} style={{marginBottom:24}}>
-                      <div style={{fontSize:11,letterSpacing:"0.15em",color:"#e8c547",textTransform:"uppercase",marginBottom:10}}>{genre} ({items.length})</div>
+                      <div style={{fontSize:11,letterSpacing:"0.15em",color:"#c4713a",textTransform:"uppercase",marginBottom:10}}>{genre} ({items.length})</div>
                       <div style={{display:"flex",flexDirection:"column",gap:8}}>
                         {items.map(s=>{
                           const url=fileUrl(s.file_path);
@@ -285,7 +285,7 @@ export default function AdminDashboard({ onBack, notify }) {
                                 <div style={{fontWeight:"bold"}}>{s.dancer_name} <span style={{fontSize:11,color:"#555"}}>· {s.membership_code}</span></div>
                                 <div style={{fontSize:12,color:"#888",marginTop:2}}>"{s.song_title}" · {s.studio_name} · {s.age_group}</div>
                               </div>
-                              {url && <button onClick={()=>setPlayingUrl(p=>p===url?null:url)} style={{background:"#e8c54718",border:"none",borderRadius:6,padding:"6px 14px",color:"#e8c547",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center"}}>
+                              {url && <button onClick={()=>setPlayingUrl(p=>p===url?null:url)} style={{background:"#c4713a18",border:"none",borderRadius:6,padding:"6px 14px",color:"#c4713a",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center"}}>
                                 {playingUrl===url?"⏸":"▶"}<AudioBars playing={playingUrl===url}/>
                               </button>}
                             </div>
@@ -316,7 +316,7 @@ export default function AdminDashboard({ onBack, notify }) {
                   if (!items.length) return null;
                   return (
                     <div key={genre} style={{marginBottom:24}}>
-                      <div style={{fontSize:11,letterSpacing:"0.15em",color:"#a78bfa",textTransform:"uppercase",marginBottom:10}}>{genre} ({items.length})</div>
+                      <div style={{fontSize:11,letterSpacing:"0.15em",color:"#c4713a",textTransform:"uppercase",marginBottom:10}}>{genre} ({items.length})</div>
                       <div style={{display:"flex",flexDirection:"column",gap:8}}>
                         {items.map(g=>{
                           const members=groupMembers.filter(m=>m.group_entry_id===g.id);
@@ -327,7 +327,7 @@ export default function AdminDashboard({ onBack, notify }) {
                                 <div style={{flex:1}}>
                                   <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
                                     <span style={{fontWeight:"bold",fontSize:15}}>{g.group_name}</span>
-                                    <span style={S.tag("#a78bfa")}>{g.group_type}</span>
+                                    <span style={S.tag("#c4713a")}>{g.group_type}</span>
                                     <span style={{fontSize:12,color:"#555"}}>{g.studio_name}</span>
                                   </div>
                                   <div style={{fontSize:12,color:"#888",marginTop:4}}>"{g.song_title}" · {g.age_group} · R{g.total_fee}</div>
@@ -336,7 +336,7 @@ export default function AdminDashboard({ onBack, notify }) {
                                     <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{members.map(m=><span key={m.id} style={S.tag("#555")}>{m.dancer_name}</span>)}</div>
                                   </div>
                                 </div>
-                                {url && <button onClick={()=>setPlayingUrl(p=>p===url?null:url)} style={{background:"#a78bfa18",border:"none",borderRadius:6,padding:"6px 14px",color:"#a78bfa",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",flexShrink:0}}>
+                                {url && <button onClick={()=>setPlayingUrl(p=>p===url?null:url)} style={{background:"#c4713a18",border:"none",borderRadius:6,padding:"6px 14px",color:"#c4713a",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",flexShrink:0}}>
                                   {playingUrl===url?"⏸":"▶"}<AudioBars playing={playingUrl===url}/>
                                 </button>}
                               </div>
@@ -372,14 +372,14 @@ export default function AdminDashboard({ onBack, notify }) {
                               {label:"Est. Total",value:`R${reg+sol+grp}`,sub:"estimate only",bold:true},
                             ].map(it=>(
                               <div key={it.label} style={{padding:"10px 12px",background:"#1c1c1c",borderRadius:8,border:"1px solid #242424"}}>
-                                <div style={{fontSize:it.bold?18:15,color:it.bold?"#ff6b6b":"#f0ece0",fontWeight:it.bold?"bold":"normal"}}>{it.value}</div>
+                                <div style={{fontSize:it.bold?18:15,color:it.bold?"#b05060":"#f0ece0",fontWeight:it.bold?"bold":"normal"}}>{it.value}</div>
                                 <div style={{fontSize:10,color:"#444",textTransform:"uppercase",letterSpacing:"0.08em"}}>{it.label}</div>
                                 <div style={{fontSize:11,color:"#555"}}>{it.sub}</div>
                               </div>
                             ))}
                           </div>
                         </div>
-                        <button onClick={()=>exportStudioInvoice(studio)} style={S.ghost("#e8c547")}>⬇ Export</button>
+                        <button onClick={()=>exportStudioInvoice(studio)} style={S.ghost("#c4713a")}>⬇ Export</button>
                       </div>
                     </div>
                   );
