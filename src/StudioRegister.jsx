@@ -137,20 +137,20 @@ export default function StudioRegister({ onBack, onSuccess, notify }) {
                 <input style={S.input} value={form.studio_code} onChange={e=>set("studio_code",e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g,""))} placeholder="e.g. SDA-456" />
                 <div style={{fontSize:11,color:"#444",marginTop:4}}>Teachers use this to log into the studio portal</div>
               </div>
-              <div><label style={S.label}>Studio Address</label><input style={S.input} value={form.studio_address} onChange={e=>set("studio_address",e.target.value)} placeholder="123 Dance Street, City" /></div>
-              <div><label style={S.label}>Studio Contact Number</label><input style={S.input} value={form.studio_contact_nr} onChange={e=>set("studio_contact_nr",e.target.value)} placeholder="011 000 0000" /></div>
+              <div><label style={S.label}>Studio Address *</label><input style={S.input} value={form.studio_address} onChange={e=>set("studio_address",e.target.value)} placeholder="123 Dance Street, City" /></div>
+              <div><label style={S.label}>Studio Contact Number *</label><input style={S.input} value={form.studio_contact_nr} onChange={e=>set("studio_contact_nr",e.target.value)} placeholder="011 000 0000" /></div>
               <div><label style={S.label}>Studio Email Address *</label><input style={S.input} type="email" value={form.studio_email} onChange={e=>set("studio_email",e.target.value)} placeholder="info@yourstudio.co.za" /></div>
-              <button style={S.btn("#F27C20")} onClick={()=>{ if(!form.studio_name||!form.studio_email||!form.studio_code){notify("Studio name, email and code are required","#c0392b");return;} setStep(2); }}>Next →</button>
+              <button style={S.btn("#F27C20")} onClick={()=>{ if(!form.studio_name||!form.studio_email||!form.studio_code||!form.studio_address||!form.studio_contact_nr){notify("All fields on this page are required","#c0392b");return;} setStep(2); }}>Next →</button>
             </div>
           )}
           {step===2 && (
             <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
               <div><label style={S.label}>Studio Owner / Principal Name *</label><input style={S.input} value={form.studio_owner_name} onChange={e=>set("studio_owner_name",e.target.value)} placeholder="Full Name" /></div>
-              <div><label style={S.label}>Owner Email Address</label><input style={S.input} type="email" value={form.studio_owner_email} onChange={e=>set("studio_owner_email",e.target.value)} placeholder="owner@yourstudio.co.za" /></div>
-              <div><label style={S.label}>Owner Contact Number</label><input style={S.input} value={form.studio_owner_contact_nr} onChange={e=>set("studio_owner_contact_nr",e.target.value)} placeholder="082 000 0000" /></div>
+              <div><label style={S.label}>Owner Email Address *</label><input style={S.input} type="email" value={form.studio_owner_email} onChange={e=>set("studio_owner_email",e.target.value)} placeholder="owner@yourstudio.co.za" /></div>
+              <div><label style={S.label}>Owner Contact Number *</label><input style={S.input} value={form.studio_owner_contact_nr} onChange={e=>set("studio_owner_contact_nr",e.target.value)} placeholder="082 000 0000" /></div>
               <div style={{display:"flex",gap:10}}>
                 <button style={S.ghost()} onClick={()=>setStep(1)}>← Back</button>
-                <button style={{...S.btn("#F27C20"),flex:1}} onClick={()=>{ if(!form.studio_owner_name){notify("Owner name is required","#c0392b");return;} setStep(3); }}>Next →</button>
+                <button style={{...S.btn("#F27C20"),flex:1}} onClick={()=>{ if(!form.studio_owner_name||!form.studio_owner_email||!form.studio_owner_contact_nr){notify("All fields on this page are required","#c0392b");return;} setStep(3); }}>Next →</button>
               </div>
             </div>
           )}
