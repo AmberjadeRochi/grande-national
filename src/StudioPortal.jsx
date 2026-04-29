@@ -323,11 +323,16 @@ function AddSoloModal({ dancer: initialDancer, dancers, session, onClose, onSave
 
   const save = async () => {
     if (!dancer||!form.genre||!form.song_title.trim()||!form.file) { setError("All fields are required. Please select a dancer, genre, song title and upload a music file."); return; }
+    // Check if submissions are locked
+    const { data: settings } = await supabase.from("app_settings").select("value").eq("key","submissions_locked").single().catch(()=>({data:null}));
+    if (settings?.value === "true") { setError("Submissions are currently closed. Please contact the competition organiser."); return; }
     setLoading(true);
     try {
       const path = `${session.studio_code}/solos/${dancer.id}_${form.genre}_${Date.now()}_${form.file.name}`;
+      const MAX_SIZE = 50 * 1024 * 1024; // 50MB
+      if (form.file.size > MAX_SIZE) { setError("File is too large. Maximum size is 50MB. Please compress your audio file and try again."); setLoading(false); return; }
       const {error:ue} = await supabase.storage.from("mp3s").upload(path, form.file, {upsert:true, contentType: form.file.type});
-      if(ue) { throw new Error("File upload failed: " + ue.message + ". Please check the storage bucket is set to public in Supabase."); }
+      if(ue) { throw new Error("File upload failed: " + ue.message); }
       const {error:ie} = await supabase.from("solo_entries").insert({
         dancer_id:dancer.id, dancer_name:`${dancer.first_name} ${dancer.last_name}`,
         membership_code:dancer.membership_code, studio_code:session.studio_code,
