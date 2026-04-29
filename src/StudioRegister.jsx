@@ -101,7 +101,7 @@ export default function StudioRegister({ onBack, onSuccess, notify }) {
       <div style={{ maxWidth:560, margin:"0 auto", padding:"80px 24px", textAlign:"center" }}>
         <div style={{ fontSize:56, marginBottom:20 }}>✓</div>
         <div style={{ fontSize:28, color:"#F27C20", marginBottom:16 }}>Registration Submitted!</div>
-        <p style={{ color:"#666", lineHeight:1.8, fontSize:14 }}>
+        <p style={{ color:"#ffffff", lineHeight:1.8, fontSize:14 }}>
           Thank you for registering <strong style={{color:"#f0ece0"}}>{form.studio_name}</strong>.<br/>
           Your studio login code is: <strong style={{color:"#F27C20"}}>{form.studio_code}</strong><br/><br/>
           An admin will review and approve your registration.<br/>
@@ -119,7 +119,7 @@ export default function StudioRegister({ onBack, onSuccess, notify }) {
         <button style={S.back} onClick={onBack}>← Back</button>
         <div style={{ fontSize:10, letterSpacing:"0.4em", color:"#F27C20", textTransform:"uppercase", marginBottom:10 }}>Grande National</div>
         <h2 style={{ fontSize:30, fontWeight:"normal", margin:"0 0 8px" }}>Studio Registration</h2>
-        <p style={{ color:"#555", fontSize:13, marginBottom:28 }}>Register your dance studio. Admin approval required before login.</p>
+        <p style={{ color:"#ffffff", fontSize:13, marginBottom:28 }}>Register your dance studio. Admin approval required before login.</p>
         <div style={{ display:"flex", gap:8, marginBottom:32 }}>
           {steps.map((s,i)=>(
             <div key={s} style={{ flex:1, textAlign:"center" }}>
@@ -133,9 +133,9 @@ export default function StudioRegister({ onBack, onSuccess, notify }) {
             <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
               <div><label style={S.label}>Studio Name *</label><input style={S.input} value={form.studio_name} onChange={e=>handleNameChange(e.target.value)} placeholder="e.g. Sunshine Dance Academy" /></div>
               <div>
-                <label style={S.label}>Studio Code * <span style={{color:"#444",textTransform:"none",letterSpacing:0,fontSize:10}}>(auto-generated — you can edit)</span></label>
+                <label style={S.label}>Studio Code * <span style={{color:"#ffffff",textTransform:"none",letterSpacing:0,fontSize:10}}>(auto-generated — you can edit)</span></label>
                 <input style={S.input} value={form.studio_code} onChange={e=>set("studio_code",e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g,""))} placeholder="e.g. SDA-456" />
-                <div style={{fontSize:11,color:"#444",marginTop:4}}>Teachers use this to log into the studio portal</div>
+                <div style={{fontSize:11,color:"#ffffff",marginTop:4}}>Teachers use this to log into the studio portal</div>
               </div>
               <div><label style={S.label}>Studio Address *</label><input style={S.input} value={form.studio_address} onChange={e=>set("studio_address",e.target.value)} placeholder="123 Dance Street, City" /></div>
               <div><label style={S.label}>Studio Contact Number *</label><input style={S.input} value={form.studio_contact_nr} onChange={e=>set("studio_contact_nr",e.target.value)} placeholder="011 000 0000" /></div>
