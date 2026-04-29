@@ -3,7 +3,6 @@ import { supabase, S, Spinner, C } from "./App.jsx";
 
 // EmailJS config - fill in your IDs from emailjs.com
 const EMAILJS_SERVICE_ID = "service_pu3z5w7";
-const EMAILJS_TEMPLATE_STUDIO = "studio_registered";
 const EMAILJS_TEMPLATE_ADMIN = "admin_notification";
 const EMAILJS_PUBLIC_KEY = "ya4ajibqy-aUf00Gl";
 const ADMIN_EMAILS = ["marcel@amberjade.co.za", "rochelle@amberjade.co.za"];
@@ -84,16 +83,7 @@ export default function StudioRegister({ onBack, onSuccess, notify }) {
         if (error.code === "23505") setError("A studio with this email or code already exists. Please use a different email.");
         else setError("Registration failed: " + error.message);
       } else {
-        // Send confirmation email to studio
-        sendEmail(EMAILJS_TEMPLATE_STUDIO, {
-          to_email: form.studio_email,
-          to_name: form.studio_owner_name || form.studio_name,
-          studio_name: form.studio_name,
-          studio_code: form.studio_code.trim(),
-          studio_email: form.studio_email,
-          message: "Your studio registration has been submitted successfully. Once approved by admin you can log in using your studio email and the password you set during registration."
-        });
-        // Send notification emails to admins
+        // Send notification emails to admins only
         for (const adminEmail of ADMIN_EMAILS) {
           sendEmail(EMAILJS_TEMPLATE_ADMIN, {
             to_email: adminEmail,
