@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { supabase, S, Spinner, AudioBars, GENRES, PRICING, C } from "./App.jsx";
 import * as XLSX from "xlsx";
 
-const ADMIN_PASSWORD = "ROOS!"; // Change this to your password
+const ADMIN_PASSWORD = "GrandeNational2025!"; // Change this to your password
 
 export default function AdminDashboard({ onBack, notify }) {
   const [authed, setAuthed] = useState(false);
@@ -166,8 +166,8 @@ export default function AdminDashboard({ onBack, notify }) {
           ].map(st=>(
             <div key={st.label} style={{...S.card,padding:"16px 18px",textAlign:"center"}}>
               <div style={{fontSize:26,color:st.color,fontStyle:"italic"}}>{st.value}</div>
-              <div style={{fontSize:10,color:"#444",textTransform:"uppercase",letterSpacing:"0.1em",marginTop:2}}>{st.label}</div>
-              <div style={{fontSize:11,color:"#555",marginTop:2}}>{st.sub}</div>
+              <div style={{fontSize:10,color:"#ffffff",textTransform:"uppercase",letterSpacing:"0.1em",marginTop:2}}>{st.label}</div>
+              <div style={{fontSize:11,color:"#ffffff",marginTop:2}}>{st.sub}</div>
             </div>
           ))}
         </div>
@@ -184,12 +184,12 @@ export default function AdminDashboard({ onBack, notify }) {
         </div>
 
         {loading ? (
-          <div style={{textAlign:"center",padding:60,color:"#444"}}><Spinner/><div style={{marginTop:12}}>Loading...</div></div>
+          <div style={{textAlign:"center",padding:60,color:"#ffffff"}}><Spinner/><div style={{marginTop:12}}>Loading...</div></div>
         ) : (
           <>
             {tab==="studios" && (
               <div style={{display:"flex",flexDirection:"column",gap:12}}>
-                {studios.length===0 && <div style={{...S.card,textAlign:"center",color:"#444",fontStyle:"italic",padding:40}}>No studio registrations yet.</div>}
+                {studios.length===0 && <div style={{...S.card,textAlign:"center",color:"#ffffff",fontStyle:"italic",padding:40}}>No studio registrations yet.</div>}
                 {["pending","approved","rejected"].map(status=>{
                   const list=studios.filter(s=>s.status===status);
                   if (!list.length) return null;
@@ -202,8 +202,8 @@ export default function AdminDashboard({ onBack, notify }) {
                         <div key={s.id} style={{...S.card,marginBottom:10}}>
                           <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:12}}>
                             <div style={{flex:1}}>
-                              <div style={{fontWeight:"bold",fontSize:16}}>{s.studio_name} <span style={{fontSize:12,color:"#555"}}>· {s.studio_code}</span></div>
-                              <div style={{fontSize:12,color:"#666",marginTop:4,lineHeight:1.8}}>
+                              <div style={{fontWeight:"bold",fontSize:16}}>{s.studio_name} <span style={{fontSize:12,color:"#ffffff"}}>· {s.studio_code}</span></div>
+                              <div style={{fontSize:12,color:"#ffffff",marginTop:4,lineHeight:1.8}}>
                                 📧 {s.studio_email} · 📞 {s.studio_contact_nr||"—"}<br/>
                                 📍 {s.studio_address||"—"}<br/>
                                 👤 {s.studio_owner_name||"—"} · {s.studio_owner_contact_nr||"—"}
@@ -241,8 +241,8 @@ export default function AdminDashboard({ onBack, notify }) {
                       <div key={d.id} style={{...S.card,padding:"14px 18px"}}>
                         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
                           <div>
-                            <div style={{fontWeight:"bold"}}>{d.first_name} {d.last_name} <span style={{fontSize:12,color:"#555"}}>· {d.membership_code}</span></div>
-                            <div style={{fontSize:12,color:"#666",marginTop:3}}>{d.studio_name} · {d.gender} · Age {d.age} · {d.age_group}</div>
+                            <div style={{fontWeight:"bold"}}>{d.first_name} {d.last_name} <span style={{fontSize:12,color:"#ffffff"}}>· {d.membership_code}</span></div>
+                            <div style={{fontSize:12,color:"#ffffff",marginTop:3}}>{d.studio_name} · {d.gender} · Age {d.age} · {d.age_group}</div>
                             <div style={{display:"flex",gap:8,marginTop:8,flexWrap:"wrap"}}>
                               <span style={S.tag("#F27C20")}>{ds.length} solos</span>
                               <span style={S.tag("#F27C20")}>{dg.length} groups</span>
@@ -269,7 +269,7 @@ export default function AdminDashboard({ onBack, notify }) {
                     {GENRES.map(g=><option key={g}>{g}</option>)}
                   </select>
                 </div>
-                {filteredSolos.length===0 && <div style={{...S.card,textAlign:"center",color:"#444",padding:40,fontStyle:"italic"}}>No solo entries found.</div>}
+                {filteredSolos.length===0 && <div style={{...S.card,textAlign:"center",color:"#ffffff",padding:40,fontStyle:"italic"}}>No solo entries found.</div>}
                 {GENRES.map(genre=>{
                   const items=filteredSolos.filter(s=>s.genre===genre);
                   if (!items.length) return null;
@@ -282,8 +282,8 @@ export default function AdminDashboard({ onBack, notify }) {
                           return (
                             <div key={s.id} style={{...S.card,padding:"12px 18px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                               <div>
-                                <div style={{fontWeight:"bold"}}>{s.dancer_name} <span style={{fontSize:11,color:"#555"}}>· {s.membership_code}</span></div>
-                                <div style={{fontSize:12,color:"#888",marginTop:2}}>"{s.song_title}" · {s.studio_name} · {s.age_group}</div>
+                                <div style={{fontWeight:"bold"}}>{s.dancer_name} <span style={{fontSize:11,color:"#ffffff"}}>· {s.membership_code}</span></div>
+                                <div style={{fontSize:12,color:"#cccccc",marginTop:2}}>"{s.song_title}" · {s.studio_name} · {s.age_group}</div>
                               </div>
                               {url && <button onClick={()=>setPlayingUrl(p=>p===url?null:url)} style={{background:"#F27C2018",border:"none",borderRadius:6,padding:"6px 14px",color:"#F27C20",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center"}}>
                                 {playingUrl===url?"⏸":"▶"}<AudioBars playing={playingUrl===url}/>
@@ -310,7 +310,7 @@ export default function AdminDashboard({ onBack, notify }) {
                     {GENRES.map(g=><option key={g}>{g}</option>)}
                   </select>
                 </div>
-                {filteredGroups.length===0 && <div style={{...S.card,textAlign:"center",color:"#444",padding:40,fontStyle:"italic"}}>No group entries found.</div>}
+                {filteredGroups.length===0 && <div style={{...S.card,textAlign:"center",color:"#ffffff",padding:40,fontStyle:"italic"}}>No group entries found.</div>}
                 {GENRES.map(genre=>{
                   const items=filteredGroups.filter(g=>g.genre===genre);
                   if (!items.length) return null;
@@ -328,11 +328,11 @@ export default function AdminDashboard({ onBack, notify }) {
                                   <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
                                     <span style={{fontWeight:"bold",fontSize:15}}>{g.group_name}</span>
                                     <span style={S.tag("#F27C20")}>{g.group_type}</span>
-                                    <span style={{fontSize:12,color:"#555"}}>{g.studio_name}</span>
+                                    <span style={{fontSize:12,color:"#ffffff"}}>{g.studio_name}</span>
                                   </div>
-                                  <div style={{fontSize:12,color:"#888",marginTop:4}}>"{g.song_title}" · {g.age_group} · R{g.total_fee}</div>
+                                  <div style={{fontSize:12,color:"#cccccc",marginTop:4}}>"{g.song_title}" · {g.age_group} · R{g.total_fee}</div>
                                   <div style={{marginTop:8}}>
-                                    <div style={{fontSize:11,color:"#555",marginBottom:4}}>Members:</div>
+                                    <div style={{fontSize:11,color:"#ffffff",marginBottom:4}}>Members:</div>
                                     <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{members.map(m=><span key={m.id} style={S.tag("#555")}>{m.dancer_name}</span>)}</div>
                                   </div>
                                 </div>
@@ -352,7 +352,7 @@ export default function AdminDashboard({ onBack, notify }) {
 
             {tab==="invoices" && (
               <div style={{display:"flex",flexDirection:"column",gap:14}}>
-                {studios.filter(s=>s.status==="approved").length===0 && <div style={{...S.card,textAlign:"center",color:"#444",padding:40,fontStyle:"italic"}}>No approved studios yet.</div>}
+                {studios.filter(s=>s.status==="approved").length===0 && <div style={{...S.card,textAlign:"center",color:"#ffffff",padding:40,fontStyle:"italic"}}>No approved studios yet.</div>}
                 {studios.filter(s=>s.status==="approved").map(studio=>{
                   const sd=dancers.filter(d=>d.studio_code===studio.studio_code);
                   const ss=solos.filter(s=>s.studio_code===studio.studio_code);
@@ -363,7 +363,7 @@ export default function AdminDashboard({ onBack, notify }) {
                       <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:16}}>
                         <div style={{flex:1}}>
                           <div style={{fontWeight:"bold",fontSize:17}}>{studio.studio_name}</div>
-                          <div style={{fontSize:12,color:"#555",marginTop:4}}>{studio.studio_code} · {studio.studio_email}</div>
+                          <div style={{fontSize:12,color:"#ffffff",marginTop:4}}>{studio.studio_code} · {studio.studio_email}</div>
                           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(110px,1fr))",gap:8,marginTop:14}}>
                             {[
                               {label:"Reg fees",value:`R${reg}`,sub:`${sd.length} dancers`},
@@ -373,8 +373,8 @@ export default function AdminDashboard({ onBack, notify }) {
                             ].map(it=>(
                               <div key={it.label} style={{padding:"10px 12px",background:"#1c1c1c",borderRadius:8,border:"1px solid #242424"}}>
                                 <div style={{fontSize:it.bold?18:15,color:it.bold?"#F27C20":"#f0ece0",fontWeight:it.bold?"bold":"normal"}}>{it.value}</div>
-                                <div style={{fontSize:10,color:"#444",textTransform:"uppercase",letterSpacing:"0.08em"}}>{it.label}</div>
-                                <div style={{fontSize:11,color:"#555"}}>{it.sub}</div>
+                                <div style={{fontSize:10,color:"#ffffff",textTransform:"uppercase",letterSpacing:"0.08em"}}>{it.label}</div>
+                                <div style={{fontSize:11,color:"#ffffff"}}>{it.sub}</div>
                               </div>
                             ))}
                           </div>
