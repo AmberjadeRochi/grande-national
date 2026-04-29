@@ -100,14 +100,14 @@ export default function StudioRegister({ onBack, onSuccess, notify }) {
     <div style={S.app}>
       <div style={{ maxWidth:560, margin:"0 auto", padding:"80px 24px", textAlign:"center" }}>
         <div style={{ fontSize:56, marginBottom:20 }}>✓</div>
-        <div style={{ fontSize:28, color:"#c4713a", marginBottom:16 }}>Registration Submitted!</div>
+        <div style={{ fontSize:28, color:"#F27C20", marginBottom:16 }}>Registration Submitted!</div>
         <p style={{ color:"#666", lineHeight:1.8, fontSize:14 }}>
           Thank you for registering <strong style={{color:"#f0ece0"}}>{form.studio_name}</strong>.<br/>
-          Your studio login code is: <strong style={{color:"#c4713a"}}>{form.studio_code}</strong><br/><br/>
+          Your studio login code is: <strong style={{color:"#F27C20"}}>{form.studio_code}</strong><br/><br/>
           An admin will review and approve your registration.<br/>
           Once approved, log in with your studio email and password.
         </p>
-        <button style={{...S.btn("#c4713a"), margin:"24px auto 0"}} onClick={onBack}>← Back to Home</button>
+        <button style={{...S.btn("#F27C20"), margin:"24px auto 0"}} onClick={onBack}>← Back to Home</button>
       </div>
     </div>
   );
@@ -117,14 +117,14 @@ export default function StudioRegister({ onBack, onSuccess, notify }) {
     <div style={S.app}>
       <div style={{ maxWidth:600, margin:"0 auto", padding:"48px 24px" }}>
         <button style={S.back} onClick={onBack}>← Back</button>
-        <div style={{ fontSize:10, letterSpacing:"0.4em", color:"#c4713a", textTransform:"uppercase", marginBottom:10 }}>Grande National</div>
+        <div style={{ fontSize:10, letterSpacing:"0.4em", color:"#F27C20", textTransform:"uppercase", marginBottom:10 }}>Grande National</div>
         <h2 style={{ fontSize:30, fontWeight:"normal", margin:"0 0 8px" }}>Studio Registration</h2>
         <p style={{ color:"#555", fontSize:13, marginBottom:28 }}>Register your dance studio. Admin approval required before login.</p>
         <div style={{ display:"flex", gap:8, marginBottom:32 }}>
           {steps.map((s,i)=>(
             <div key={s} style={{ flex:1, textAlign:"center" }}>
-              <div style={{ height:3, borderRadius:2, background:step>i?"#c4713a":"#222", marginBottom:6 }} />
-              <div style={{ fontSize:10, color:step>i?"#c4713a":"#333", textTransform:"uppercase", letterSpacing:"0.08em" }}>{s}</div>
+              <div style={{ height:3, borderRadius:2, background:step>i?"#F27C20":"#222", marginBottom:6 }} />
+              <div style={{ fontSize:10, color:step>i?"#F27C20":"#333", textTransform:"uppercase", letterSpacing:"0.08em" }}>{s}</div>
             </div>
           ))}
         </div>
@@ -140,7 +140,7 @@ export default function StudioRegister({ onBack, onSuccess, notify }) {
               <div><label style={S.label}>Studio Address</label><input style={S.input} value={form.studio_address} onChange={e=>set("studio_address",e.target.value)} placeholder="123 Dance Street, City" /></div>
               <div><label style={S.label}>Studio Contact Number</label><input style={S.input} value={form.studio_contact_nr} onChange={e=>set("studio_contact_nr",e.target.value)} placeholder="011 000 0000" /></div>
               <div><label style={S.label}>Studio Email Address *</label><input style={S.input} type="email" value={form.studio_email} onChange={e=>set("studio_email",e.target.value)} placeholder="info@yourstudio.co.za" /></div>
-              <button style={S.btn("#c4713a")} onClick={()=>{ if(!form.studio_name||!form.studio_email||!form.studio_code){notify("Studio name, email and code are required","#c0392b");return;} setStep(2); }}>Next →</button>
+              <button style={S.btn("#F27C20")} onClick={()=>{ if(!form.studio_name||!form.studio_email||!form.studio_code){notify("Studio name, email and code are required","#c0392b");return;} setStep(2); }}>Next →</button>
             </div>
           )}
           {step===2 && (
@@ -150,7 +150,7 @@ export default function StudioRegister({ onBack, onSuccess, notify }) {
               <div><label style={S.label}>Owner Contact Number</label><input style={S.input} value={form.studio_owner_contact_nr} onChange={e=>set("studio_owner_contact_nr",e.target.value)} placeholder="082 000 0000" /></div>
               <div style={{display:"flex",gap:10}}>
                 <button style={S.ghost()} onClick={()=>setStep(1)}>← Back</button>
-                <button style={{...S.btn("#c4713a"),flex:1}} onClick={()=>{ if(!form.studio_owner_name){notify("Owner name is required","#c0392b");return;} setStep(3); }}>Next →</button>
+                <button style={{...S.btn("#F27C20"),flex:1}} onClick={()=>{ if(!form.studio_owner_name){notify("Owner name is required","#c0392b");return;} setStep(3); }}>Next →</button>
               </div>
             </div>
           )}
@@ -158,13 +158,13 @@ export default function StudioRegister({ onBack, onSuccess, notify }) {
             <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
               <div style={{padding:"12px 16px",background:"#1a1200",border:"1px solid #3a2e00",borderRadius:8,fontSize:13,color:"#a08c40"}}>
                 Studio: <strong style={{color:"#f0ece0"}}>{form.studio_name}</strong><br/>
-                Login code: <strong style={{color:"#c4713a"}}>{form.studio_code}</strong>
+                Login code: <strong style={{color:"#F27C20"}}>{form.studio_code}</strong>
               </div>
               <div><label style={S.label}>Set Password *</label><input style={S.input} type="password" value={form.password} onChange={e=>set("password",e.target.value)} placeholder="Minimum 6 characters" /></div>
               <div><label style={S.label}>Confirm Password *</label><input style={S.input} type="password" value={form.confirm_password} onChange={e=>set("confirm_password",e.target.value)} placeholder="Repeat password" onKeyDown={e=>e.key==="Enter"&&submit()} /></div>
               <div style={{display:"flex",gap:10}}>
                 <button style={S.ghost()} onClick={()=>setStep(2)}>← Back</button>
-                <button style={{...S.btn("#c4713a"),flex:1}} onClick={submit} disabled={loading}>
+                <button style={{...S.btn("#F27C20"),flex:1}} onClick={submit} disabled={loading}>
                   {loading?<Spinner color="#0a0a0a"/>:"Submit Registration"}
                 </button>
               </div>
