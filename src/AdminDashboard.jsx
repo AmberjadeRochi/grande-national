@@ -19,6 +19,7 @@ export default function AdminDashboard({ onBack, notify }) {
   const [filterStudio, setFilterStudio] = useState("all");
   const [filterGenre, setFilterGenre] = useState("all");
   const [zipProgress, setZipProgress] = useState(null);
+  const [submissionsLocked, setSubmissionsLocked] = useState(false);
   const audioRef = useRef(null);
 
   const load = async () => {
@@ -42,7 +43,23 @@ export default function AdminDashboard({ onBack, notify }) {
     setLoading(false);
   };
 
-  useEffect(() => { if (authed) load(); }, [authed]);
+  useEffect(() => { if (authed) { load(); loadLockStatus(); } }, [authed]);
+
+  const loadLockStatus = async () => {
+    try {
+      const { data } = await supabase.from("app_settings").select("value").eq("key","submissions_locked").single();
+      setSubmissionsLocked(data?.value === "true");
+    } catch(e) { setSubmissionsLocked(false); }
+  };
+
+  const toggleLock = async () => {
+    const newVal = !submissionsLocked;
+    try {
+      await supabase.from("app_settings").upsert({ key:"submissions_locked", value: String(newVal) }, { onConflict:"key" });
+      setSubmissionsLocked(newVal);
+      notify(newVal ? "🔒 Submissions are now CLOSED — studios cannot add new entries." : "🔓 Submissions are now OPEN — studios can add entries.", newVal ? "#c0392b" : "#1a6b3a");
+    } catch(e) { notify("Error: " + e.message, "#c0392b"); }
+  };
   useEffect(() => {
     if (!audioRef.current) return;
     if (playingUrl) { audioRef.current.src=playingUrl; audioRef.current.play().catch(()=>{}); }
@@ -455,6 +472,21 @@ export default function AdminDashboard({ onBack, notify }) {
               <div style={{fontSize:11,color:"#ffffff",marginTop:2}}>{st.sub}</div>
             </div>
           ))}
+        </div>
+
+        {/* Submission lock banner */}
+        <div style={{ marginBottom:16, padding:"14px 20px", background: submissionsLocked ? "#2a0808" : "#082a12", border: `1px solid ${submissionsLocked ? "#c0392b" : "#1a6b3a"}`, borderRadius:6, display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:12 }}>
+          <div>
+            <div style={{ fontSize:14, fontWeight:"bold", color: submissionsLocked ? "#ff6b6b" : "#4ecdc4", fontFamily:"'Montserrat',sans-serif" }}>
+              {submissionsLocked ? "🔒 Submissions CLOSED" : "🔓 Submissions OPEN"}
+            </div>
+            <div style={{ fontSize:12, color:"#cccccc", marginTop:4, fontFamily:"'Montserrat',sans-serif" }}>
+              {submissionsLocked ? "Studios cannot add new entries or upload music." : "Studios can register, add dancers and upload music."}
+            </div>
+          </div>
+          <button onClick={toggleLock} style={{ ...S.btn(submissionsLocked ? "#1a6b3a" : "#c0392b"), padding:"10px 24px", fontSize:13 }}>
+            {submissionsLocked ? "🔓 Open Submissions" : "🔒 Close Submissions"}
+          </button>
         </div>
 
         <div style={{ display:"flex", gap:10, marginBottom:16, flexWrap:"wrap", alignItems:"center" }}>
