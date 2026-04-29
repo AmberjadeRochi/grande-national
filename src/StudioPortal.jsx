@@ -108,7 +108,7 @@ export default function StudioPortal({ session, onLogout, notify }) {
       <div style={{ background:"#0f0f0f", borderBottom:"1px solid #1e1e1e", padding:"16px 24px", display:"flex", alignItems:"center", justifyContent:"space-between", position:"sticky", top:0, zIndex:100 }}>
         <div>
           <div style={{ fontSize:10, letterSpacing:"0.3em", color:"#F27C20", textTransform:"uppercase" }}>Studio Portal</div>
-          <div style={{ fontSize:18, marginTop:2 }}>{session.studio_name} <span style={{ fontSize:12, color:"#444" }}>· {session.studio_code}</span></div>
+          <div style={{ fontSize:18, marginTop:2 }}>{session.studio_name} <span style={{ fontSize:12, color:"#ffffff" }}>· {session.studio_code}</span></div>
         </div>
         <button style={S.ghost("#666")} onClick={onLogout}>Logout</button>
       </div>
@@ -124,8 +124,8 @@ export default function StudioPortal({ session, onLogout, notify }) {
           ].map((st,i,arr)=>(
             <div key={st.label} style={{ padding:"18px 20px", textAlign:"center", borderRight:i<arr.length-1?"1px solid #1e1e1e":"none" }}>
               <div style={{ fontSize:26, color:st.color, fontStyle:"italic" }}>{st.value}</div>
-              <div style={{ fontSize:10, color:"#444", textTransform:"uppercase", letterSpacing:"0.1em", marginTop:2 }}>{st.label}</div>
-              <div style={{ fontSize:11, color:"#555", marginTop:2 }}>{st.sub}</div>
+              <div style={{ fontSize:10, color:"#ffffff", textTransform:"uppercase", letterSpacing:"0.1em", marginTop:2 }}>{st.label}</div>
+              <div style={{ fontSize:11, color:"#ffffff", marginTop:2 }}>{st.sub}</div>
             </div>
           ))}
         </div>
@@ -138,7 +138,7 @@ export default function StudioPortal({ session, onLogout, notify }) {
         </div>
 
         {loading ? (
-          <div style={{ textAlign:"center", padding:60, color:"#444" }}><Spinner /><div style={{marginTop:12}}>Loading...</div></div>
+          <div style={{ textAlign:"center", padding:60, color:"#ffffff" }}><Spinner /><div style={{marginTop:12}}>Loading...</div></div>
         ) : (
           <>
             {/* ── DANCERS TAB ── */}
@@ -153,7 +153,7 @@ export default function StudioPortal({ session, onLogout, notify }) {
                   </label>
                 </div>
                 {dancers.length === 0 ? (
-                  <div style={{ ...S.card, textAlign:"center", color:"#444", padding:48, fontStyle:"italic" }}>No dancers yet. Add dancers one by one or import from Excel.</div>
+                  <div style={{ ...S.card, textAlign:"center", color:"#ffffff", padding:48, fontStyle:"italic" }}>No dancers yet. Add dancers one by one or import from Excel.</div>
                 ) : (
                   <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
                     {dancers.map(d => {
@@ -163,7 +163,7 @@ export default function StudioPortal({ session, onLogout, notify }) {
                         <div key={d.id} style={{ ...S.card, padding:"16px 20px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:12 }}>
                           <div style={{ flex:1 }}>
                             <div style={{ fontWeight:"bold", fontSize:16 }}>{d.first_name} {d.last_name}</div>
-                            <div style={{ fontSize:12, color:"#666", marginTop:3 }}>
+                            <div style={{ fontSize:12, color:"#ffffff", marginTop:3 }}>
                               {d.membership_code} · {d.gender} · Age {d.age} · {d.age_group}
                             </div>
                             <div style={{ display:"flex", gap:8, marginTop:8, flexWrap:"wrap" }}>
@@ -192,7 +192,7 @@ export default function StudioPortal({ session, onLogout, notify }) {
                   {dancers.length > 0 && <button style={S.btn("#F27C20")} onClick={()=>setShowAddSolo(dancers[0])}>+ Add Solo Entry</button>}
                 </div>
                 {solos.length === 0 ? (
-                  <div style={{ ...S.card, textAlign:"center", color:"#444", padding:48, fontStyle:"italic" }}>No solo entries yet. Go to Dancers tab to add solos per dancer.</div>
+                  <div style={{ ...S.card, textAlign:"center", color:"#ffffff", padding:48, fontStyle:"italic" }}>No solo entries yet. Go to Dancers tab to add solos per dancer.</div>
                 ) : (
                   <div>
                     {GENRES.map(genre => {
@@ -208,7 +208,7 @@ export default function StudioPortal({ session, onLogout, notify }) {
                                 <div key={s.id} style={{ ...S.card, padding:"14px 18px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
                                   <div>
                                     <div style={{fontWeight:"bold"}}>{s.dancer_name}</div>
-                                    <div style={{fontSize:12,color:"#888",marginTop:2}}>"{s.song_title}" · {s.age_group} · R{s.fee}</div>
+                                    <div style={{fontSize:12,color:"#cccccc",marginTop:2}}>"{s.song_title}" · {s.age_group} · R{s.fee}</div>
                                   </div>
                                   <div style={{display:"flex",gap:8,alignItems:"center"}}>
                                     {url && <button onClick={()=>setPlayingUrl(p=>p===url?null:url)} style={{background:"#F27C2018",border:"none",borderRadius:6,padding:"6px 12px",color:"#F27C20",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center"}}>
@@ -236,7 +236,7 @@ export default function StudioPortal({ session, onLogout, notify }) {
                   <button style={S.btn("#F27C20")} onClick={()=>setShowAddGroup(true)}>+ Add Group / Duo</button>
                 </div>
                 {groups.length === 0 ? (
-                  <div style={{ ...S.card, textAlign:"center", color:"#444", padding:48, fontStyle:"italic" }}>No group or duo entries yet.</div>
+                  <div style={{ ...S.card, textAlign:"center", color:"#ffffff", padding:48, fontStyle:"italic" }}>No group or duo entries yet.</div>
                 ) : (
                   <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
                     {groups.map(g => {
@@ -251,7 +251,7 @@ export default function StudioPortal({ session, onLogout, notify }) {
                                 <span style={S.tag("#F27C20")}>{g.group_type}</span>
                                 <span style={S.tag("#F27C20")}>{g.genre}</span>
                               </div>
-                              <div style={{fontSize:12,color:"#888",marginTop:4}}>"{g.song_title}" · {g.age_group} · {g.member_count} dancers · R{g.total_fee} total</div>
+                              <div style={{fontSize:12,color:"#cccccc",marginTop:4}}>"{g.song_title}" · {g.age_group} · {g.member_count} dancers · R{g.total_fee} total</div>
                               <button onClick={()=>setShowGroupMembers(g)} style={{...S.ghost("#F27C20"),padding:"4px 12px",fontSize:12,marginTop:10}}>
                                 👥 View {members.length} member{members.length!==1?"s":""}
                               </button>
@@ -410,7 +410,7 @@ function AddSoloModal({ dancer: initialDancer, dancers, session, onClose, onSave
           <label style={S.label}>MP3 / Music File *</label>
           <div onClick={()=>document.getElementById("soloFile").click()} style={{border:"2px dashed #2e2e2e",borderRadius:10,padding:20,textAlign:"center",cursor:"pointer",background:"#1c1c1c"}}>
             <input id="soloFile" type="file" accept=".mp3,.wav,.m4a,audio/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f)set("file",f);set("fileName",f?.name||"");}} />
-            {form.fileName?<div style={{color:"#F27C20"}}>🎵 {form.fileName}</div>:<div style={{color:"#444",fontSize:13}}>📁 Click to select music file (MP3, WAV, M4A)</div>}
+            {form.fileName?<div style={{color:"#F27C20"}}>🎵 {form.fileName}</div>:<div style={{color:"#ffffff",fontSize:13}}>📁 Click to select music file (MP3, WAV, M4A)</div>}
           </div>
         </div>
         <div style={{padding:"12px 14px",background:"#1a1200",border:"1px solid #3a2e00",borderRadius:8,fontSize:12,color:"#a08c40",lineHeight:1.8}}>
@@ -418,7 +418,7 @@ function AddSoloModal({ dancer: initialDancer, dancers, session, onClose, onSave
           {dancer && (form.genre==="Ballet"||form.genre==="Repertoire") && dancer.age_group==="Children (10–12)" && (
             <div style={{marginTop:4,color:"#F27C20"}}>🩰 Ages 10–12 Ballet/Repertoire — Pointe shoes optional</div>
           )}
-          <div style={{marginTop:4,fontSize:11,color:"#666"}}>*Please wait for final invoice before making payment</div>
+          <div style={{marginTop:4,fontSize:11,color:"#ffffff"}}>*Please wait for final invoice before making payment</div>
         </div>
         <button style={S.btn("#F27C20")} onClick={save} disabled={loading}>{loading?<Spinner color="#0a0a0a"/>:"Add Solo Entry"}</button>
       </div>
@@ -462,7 +462,7 @@ function EditSoloModal({ solo, onClose, onSave, notify }) {
           <label style={S.label}>Replace Music File (optional)</label>
           <div onClick={()=>document.getElementById("editSoloFile").click()} style={{border:"2px dashed #2e2e2e",borderRadius:10,padding:20,textAlign:"center",cursor:"pointer",background:"#1c1c1c"}}>
             <input id="editSoloFile" type="file" accept=".mp3,.wav,.m4a,audio/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f){set("file",f);set("fileName",f.name);}}} />
-            {form.fileName?<div style={{color:"#F27C20"}}>🎵 {form.fileName}</div>:<div style={{color:"#444",fontSize:13}}>Current: {solo.file_name}<br/><span style={{fontSize:11}}>Click to replace</span></div>}
+            {form.fileName?<div style={{color:"#F27C20"}}>🎵 {form.fileName}</div>:<div style={{color:"#ffffff",fontSize:13}}>Current: {solo.file_name}<br/><span style={{fontSize:11}}>Click to replace</span></div>}
           </div>
         </div>
         <button style={S.btn("#F27C20")} onClick={save} disabled={loading}>{loading?<Spinner color="#0a0a0a"/>:"Save Changes"}</button>
@@ -534,7 +534,7 @@ function AddGroupModal({ dancers, session, onClose, onSave, notify }) {
               const sel = !!selectedMembers.find(m=>m.id===d.id);
               return (
                 <div key={d.id} onClick={()=>toggleMember(d)} style={{padding:"10px 14px",borderRadius:8,border:`1px solid ${sel?"#F27C20":"#2e2e2e"}`,background:sel?"#F27C2018":"#1c1c1c",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                  <span>{d.first_name} {d.last_name} <span style={{fontSize:11,color:"#555"}}>· {d.age_group}</span></span>
+                  <span>{d.first_name} {d.last_name} <span style={{fontSize:11,color:"#ffffff"}}>· {d.age_group}</span></span>
                   {sel&&<span style={{color:"#F27C20"}}>✓</span>}
                 </div>
               );
@@ -550,7 +550,7 @@ function AddGroupModal({ dancers, session, onClose, onSave, notify }) {
           <label style={S.label}>Music File *</label>
           <div onClick={()=>document.getElementById("groupFile").click()} style={{border:"2px dashed #2e2e2e",borderRadius:10,padding:20,textAlign:"center",cursor:"pointer",background:"#1c1c1c"}}>
             <input id="groupFile" type="file" accept=".mp3,.wav,.m4a,audio/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f){set("file",f);set("fileName",f.name);}}} />
-            {form.fileName?<div style={{color:"#F27C20"}}>🎵 {form.fileName}</div>:<div style={{color:"#444",fontSize:13}}>📁 Click to select music file</div>}
+            {form.fileName?<div style={{color:"#F27C20"}}>🎵 {form.fileName}</div>:<div style={{color:"#ffffff",fontSize:13}}>📁 Click to select music file</div>}
           </div>
         </div>
         <button style={S.btn("#F27C20")} onClick={save} disabled={loading}>{loading?<Spinner color="#fff"/>:"Add Group Entry"}</button>
@@ -616,7 +616,7 @@ function EditGroupModal({ group, dancers, groupMembers, onClose, onSave, notify 
           <label style={S.label}>Replace Music (optional)</label>
           <div onClick={()=>document.getElementById("editGroupFile").click()} style={{border:"2px dashed #2e2e2e",borderRadius:10,padding:16,textAlign:"center",cursor:"pointer",background:"#1c1c1c"}}>
             <input id="editGroupFile" type="file" accept=".mp3,.wav,.m4a,audio/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f){set("file",f);set("fileName",f.name);}}} />
-            {form.fileName?<div style={{color:"#F27C20"}}>🎵 {form.fileName}</div>:<div style={{color:"#444",fontSize:12}}>Current: {group.file_name} · Click to replace</div>}
+            {form.fileName?<div style={{color:"#F27C20"}}>🎵 {form.fileName}</div>:<div style={{color:"#ffffff",fontSize:12}}>Current: {group.file_name} · Click to replace</div>}
           </div>
         </div>
         <button style={S.btn("#F27C20")} onClick={save} disabled={loading}>{loading?<Spinner color="#fff"/>:"Save Changes"}</button>
@@ -638,7 +638,7 @@ function GroupMembersModal({ group, members, onClose }) {
             <div style={{width:28,height:28,borderRadius:"50%",background:"#c4713a22",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:"#F27C20",fontWeight:"bold"}}>{i+1}</div>
             <div>
               <div style={{fontWeight:"bold"}}>{m.dancer_name}</div>
-              <div style={{fontSize:11,color:"#555"}}>{m.membership_code}</div>
+              <div style={{fontSize:11,color:"#ffffff"}}>{m.membership_code}</div>
             </div>
           </div>
         ))}
@@ -654,7 +654,7 @@ function Modal({ title, onClose, color, children }) {
       <div style={{...S.card,width:"100%",maxWidth:520,maxHeight:"90vh",overflowY:"auto"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
           <div style={{fontSize:18,color}}>{title}</div>
-          <button onClick={onClose} style={{background:"none",border:"none",color:"#555",fontSize:20,cursor:"pointer"}}>✕</button>
+          <button onClick={onClose} style={{background:"none",border:"none",color:"#ffffff",fontSize:20,cursor:"pointer"}}>✕</button>
         </div>
         {children}
       </div>
