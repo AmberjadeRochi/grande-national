@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { supabase, S, Spinner, AudioBars, GENRES, PRICING, C } from "./App.jsx";
 import * as XLSX from "xlsx";
 
-const ADMIN_PASSWORD = "GrandeNational2025!"; // Change this to your password
+const ADMIN_PASSWORD = "ROOS"; // Change this to your password
 
 export default function AdminDashboard({ onBack, notify }) {
   const [authed, setAuthed] = useState(false);
