@@ -33,6 +33,7 @@ export default function StudioRegister({ onBack, onSuccess, notify }) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState('');
   const [form, setForm] = useState({
     studio_name:"", studio_code:"", studio_address:"",
     studio_contact_nr:"", studio_email:"", studio_owner_name:"",
@@ -65,8 +66,8 @@ export default function StudioRegister({ onBack, onSuccess, notify }) {
         status: "pending"
       });
       if (error) {
-        if (error.code === "23505") notify("A studio with this email or code already exists","#c0392b");
-        else notify("Error: " + error.message,"#c0392b");
+        if (error.code === "23505") setError("A studio with this email or code already exists. Please use a different email.");
+        else setError("Registration failed: " + error.message);
       } else {
         setSubmitted(true);
       // Email to studio
@@ -131,6 +132,7 @@ export default function StudioRegister({ onBack, onSuccess, notify }) {
         <div style={S.card}>
           {step===1 && (
             <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+              {error && <div style={{padding:"10px 14px",background:"#2a0a0a",border:"1px solid #c0392b88",borderRadius:6,fontSize:13,color:"#ff6b6b",fontFamily:"'Montserrat',sans-serif",lineHeight:1.5}}>⚠️ {error}</div>}
               <div><label style={S.label}>Studio Name *</label><input style={S.input} value={form.studio_name} onChange={e=>handleNameChange(e.target.value)} placeholder="e.g. Sunshine Dance Academy" /></div>
               <div>
                 <label style={S.label}>Studio Code * <span style={{color:"#ffffff",textTransform:"none",letterSpacing:0,fontSize:10}}>(auto-generated — you can edit)</span></label>
@@ -140,22 +142,25 @@ export default function StudioRegister({ onBack, onSuccess, notify }) {
               <div><label style={S.label}>Studio Address *</label><input style={S.input} value={form.studio_address} onChange={e=>set("studio_address",e.target.value)} placeholder="123 Dance Street, City" /></div>
               <div><label style={S.label}>Studio Contact Number *</label><input style={S.input} value={form.studio_contact_nr} onChange={e=>set("studio_contact_nr",e.target.value)} placeholder="011 000 0000" /></div>
               <div><label style={S.label}>Studio Email Address *</label><input style={S.input} type="email" value={form.studio_email} onChange={e=>set("studio_email",e.target.value)} placeholder="info@yourstudio.co.za" /></div>
-              <button style={S.btn("#F27C20")} onClick={()=>{ if(!form.studio_name||!form.studio_email||!form.studio_code||!form.studio_address||!form.studio_contact_nr){notify("All fields on this page are required","#c0392b");return;} setStep(2); }}>Next →</button>
+              <button style={S.btn("#F27C20")} onClick={()=>{ if(!form.studio_name||!form.studio_email||!form.studio_code||!form.studio_address||!form.studio_contact_nr){setError("All fields on this page are required.");return;} setStep(2); }}>Next →</button>
             </div>
           )}
           {step===2 && (
             <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+              {error && <div style={{padding:"10px 14px",background:"#2a0a0a",border:"1px solid #c0392b88",borderRadius:6,fontSize:13,color:"#ff6b6b",fontFamily:"'Montserrat',sans-serif",lineHeight:1.5}}>⚠️ {error}</div>}
               <div><label style={S.label}>Studio Owner / Principal Name *</label><input style={S.input} value={form.studio_owner_name} onChange={e=>set("studio_owner_name",e.target.value)} placeholder="Full Name" /></div>
               <div><label style={S.label}>Owner Email Address *</label><input style={S.input} type="email" value={form.studio_owner_email} onChange={e=>set("studio_owner_email",e.target.value)} placeholder="owner@yourstudio.co.za" /></div>
               <div><label style={S.label}>Owner Contact Number *</label><input style={S.input} value={form.studio_owner_contact_nr} onChange={e=>set("studio_owner_contact_nr",e.target.value)} placeholder="082 000 0000" /></div>
               <div style={{display:"flex",gap:10}}>
                 <button style={S.ghost()} onClick={()=>setStep(1)}>← Back</button>
-                <button style={{...S.btn("#F27C20"),flex:1}} onClick={()=>{ if(!form.studio_owner_name||!form.studio_owner_email||!form.studio_owner_contact_nr){notify("All fields on this page are required","#c0392b");return;} setStep(3); }}>Next →</button>
+                <button style={{...S.btn("#F27C20"),flex:1}} onClick={()=>{ if(!form.studio_owner_name||!form.studio_owner_email||!form.studio_owner_contact_nr){setError("All fields on this page are required.");return;} setStep(3); }}>Next →</button>
               </div>
             </div>
           )}
           {step===3 && (
             <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+              {error && <div style={{padding:"10px 14px",background:"#2a0a0a",border:"1px solid #c0392b88",borderRadius:6,fontSize:13,color:"#ff6b6b",fontFamily:"'Montserrat',sans-serif",lineHeight:1.5}}>⚠️ {error}</div>}
+              <div style={{fontSize:12,color:"#888",fontFamily:"'Montserrat',sans-serif",lineHeight:1.6}}>Password must be at least 8 characters and include a number or special character.</div>
               <div style={{padding:"12px 16px",background:"#1a1200",border:"1px solid #3a2e00",borderRadius:8,fontSize:13,color:"#a08c40"}}>
                 Studio: <strong style={{color:"#f0ece0"}}>{form.studio_name}</strong><br/>
                 Login code: <strong style={{color:"#F27C20"}}>{form.studio_code}</strong>
