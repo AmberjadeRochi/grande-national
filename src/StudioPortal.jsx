@@ -19,6 +19,14 @@ export default function StudioPortal({ session, onLogout, notify }) {
   const [showEditSolo, setShowEditSolo] = useState(null);
   const [showEditGroup, setShowEditGroup] = useState(null);
   const [showGroupMembers, setShowGroupMembers] = useState(null);
+  const [submissionsLocked, setSubmissionsLocked] = useState(false);
+
+  const checkLockStatus = async () => {
+    try {
+      const { data } = await supabase.from("app_settings").select("value").eq("key","submissions_locked").single();
+      setSubmissionsLocked(data?.value === "true");
+    } catch(e) { setSubmissionsLocked(false); }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -35,7 +43,7 @@ export default function StudioPortal({ session, onLogout, notify }) {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); checkLockStatus(); }, []);
   useEffect(() => {
     if (!audioRef.current) return;
     if (playingUrl) { audioRef.current.src = playingUrl; audioRef.current.play().catch(()=>{}); }
@@ -225,11 +233,11 @@ export default function StudioPortal({ session, onLogout, notify }) {
       </div>
 
       {/* Modals */}
-      {showAddDancer && <AddDancerModal session={session} onClose={()=>setShowAddDancer(false)} onSave={async()=>{ await load(); setShowAddDancer(false); notify("✓ Dancer added!"); }} notify={notify} />}
+      {showAddDancer && <AddDancerModal session={session} submissionsLocked={submissionsLocked} onClose={()=>setShowAddDancer(false)} onSave={async()=>{ await load(); setShowAddDancer(false); notify("✓ Dancer added!"); }} notify={notify} />}
       {showEditDancer && <EditDancerModal dancer={showEditDancer} onClose={()=>setShowEditDancer(null)} onSave={async()=>{ await load(); setShowEditDancer(null); notify("✓ Dancer updated!"); }} notify={notify} />}
-      {showAddSolo && <AddSoloModal dancer={showAddSolo} dancers={dancers} session={session} onClose={()=>setShowAddSolo(null)} onSave={async()=>{ await load(); setShowAddSolo(null); notify("✓ Solo entry added!"); }} notify={notify} />}
+      {showAddSolo && <AddSoloModal dancer={showAddSolo} dancers={dancers} session={session} submissionsLocked={submissionsLocked} onClose={()=>setShowAddSolo(null)} onSave={async()=>{ await load(); setShowAddSolo(null); notify("✓ Solo entry added!"); }} notify={notify} />}
       {showEditSolo && <EditSoloModal solo={showEditSolo} onClose={()=>setShowEditSolo(null)} onSave={async()=>{ await load(); setShowEditSolo(null); notify("✓ Solo updated!"); }} notify={notify} />}
-      {showAddGroup && <AddGroupModal dancers={dancers} session={session} onClose={()=>setShowAddGroup(false)} onSave={async()=>{ await load(); setShowAddGroup(false); notify("✓ Group entry added!"); }} notify={notify} />}
+      {showAddGroup && <AddGroupModal dancers={dancers} session={session} submissionsLocked={submissionsLocked} onClose={()=>setShowAddGroup(false)} onSave={async()=>{ await load(); setShowAddGroup(false); notify("✓ Group entry added!"); }} notify={notify} />}
       {showEditGroup && <EditGroupModal group={showEditGroup} dancers={dancers} groupMembers={groupMembers.filter(m=>m.group_entry_id===showEditGroup.id)} onClose={()=>setShowEditGroup(null)} onSave={async()=>{ await load(); setShowEditGroup(null); notify("✓ Group updated!"); }} notify={notify} />}
       {showGroupMembers && <GroupMembersModal group={showGroupMembers} members={groupMembers.filter(m=>m.group_entry_id===showGroupMembers.id)} onClose={()=>setShowGroupMembers(null)} />}
     </div>
@@ -237,7 +245,7 @@ export default function StudioPortal({ session, onLogout, notify }) {
 }
 
 // ── ADD DANCER MODAL ──────────────────────────────────────────────
-function AddDancerModal({ session, onClose, onSave, notify }) {
+function AddDancerModal({ session, onClose, onSave, notify, submissionsLocked }) {
   const [form, setForm] = useState({ first_name:"", last_name:"", date_of_birth:"", gender:"Female" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -263,6 +271,12 @@ function AddDancerModal({ session, onClose, onSave, notify }) {
   return (
     <Modal title="Add Dancer" onClose={onClose} color="#F27C20">
       <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        {submissionsLocked && (
+          <div style={{padding:"14px 16px",background:"#2a0808",border:"1px solid #c0392b",borderRadius:6,fontSize:13,color:"#ff6b6b",fontFamily:"'Montserrat',sans-serif",lineHeight:1.6,marginBottom:8}}>
+            🔒 <strong>Submissions are currently closed.</strong><br/>
+            You can still edit existing entries but cannot add new ones. Please contact the competition organiser for assistance.
+          </div>
+        )}
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
           <div><label style={S.label}>First Name *</label><input style={S.input} value={form.first_name} onChange={e=>set("first_name",e.target.value)} placeholder="Sofia" /></div>
           <div><label style={S.label}>Last Name *</label><input style={S.input} value={form.last_name} onChange={e=>set("last_name",e.target.value)} placeholder="Martini" /></div>
@@ -317,7 +331,7 @@ function EditDancerModal({ dancer, onClose, onSave, notify }) {
 }
 
 // ── ADD SOLO MODAL ──
-function AddSoloModal({ dancer: initialDancer, dancers, session, onClose, onSave, notify }) {
+function AddSoloModal({ dancer: initialDancer, dancers, session, onClose, onSave, notify, submissionsLocked }) {
   const [selectedDancerId, setSelectedDancerId] = useState(initialDancer?.id || "");
   const [form, setForm] = useState({ genre:"Contemporary", song_title:"", file:null, fileName:"" });
   const [loading, setLoading] = useState(false);
@@ -353,6 +367,12 @@ function AddSoloModal({ dancer: initialDancer, dancers, session, onClose, onSave
   return (
     <Modal title="Add Solo Entry" onClose={onClose} color="#F27C20">
       <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        {submissionsLocked && (
+          <div style={{padding:"14px 16px",background:"#2a0808",border:"1px solid #c0392b",borderRadius:6,fontSize:13,color:"#ff6b6b",fontFamily:"'Montserrat',sans-serif",lineHeight:1.6,marginBottom:8}}>
+            🔒 <strong>Submissions are currently closed.</strong><br/>
+            You can still edit existing entries but cannot add new ones. Please contact the competition organiser for assistance.
+          </div>
+        )}
         <div><label style={S.label}>Dancer *</label>
           <select style={S.select} value={selectedDancerId} onChange={e=>setSelectedDancerId(e.target.value)}>
             <option value="">Select dancer...</option>
@@ -438,7 +458,7 @@ function EditSoloModal({ solo, onClose, onSave, notify }) {
 }
 
 // ── ADD GROUP MODAL ──
-function AddGroupModal({ dancers, session, onClose, onSave, notify }) {
+function AddGroupModal({ dancers, session, onClose, onSave, notify, submissionsLocked }) {
   const [form, setForm] = useState({ group_name:"", genre:"Contemporary", song_title:"", age_group:"Mini (7–9)", file:null, fileName:"" });
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -483,6 +503,12 @@ function AddGroupModal({ dancers, session, onClose, onSave, notify }) {
   return (
     <Modal title="Add Group / Duo Entry" onClose={onClose} color="#F27C20">
       <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        {submissionsLocked && (
+          <div style={{padding:"14px 16px",background:"#2a0808",border:"1px solid #c0392b",borderRadius:6,fontSize:13,color:"#ff6b6b",fontFamily:"'Montserrat',sans-serif",lineHeight:1.6,marginBottom:8}}>
+            🔒 <strong>Submissions are currently closed.</strong><br/>
+            You can still edit existing entries but cannot add new ones. Please contact the competition organiser for assistance.
+          </div>
+        )}
         <div><label style={S.label}>Group / Duo Name *</label><input style={S.input} value={form.group_name} onChange={e=>set("group_name",e.target.value)} placeholder="e.g. Leap Stars" /></div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
           <div><label style={S.label}>Genre *</label>
