@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 import { supabase, S, Spinner, C } from "./App.jsx";
 
 // EmailJS config - fill in your IDs from emailjs.com
-const EMAILJS_SERVICE_ID = "YOUR_SERVICE_ID";
-const EMAILJS_TEMPLATE_STUDIO = "YOUR_TEMPLATE_ID";
-const EMAILJS_TEMPLATE_ADMIN = "YOUR_ADMIN_TEMPLATE_ID";
-const EMAILJS_PUBLIC_KEY = "YOUR_PUBLIC_KEY";
+const EMAILJS_SERVICE_ID = "service_pu3z5w7";
+const EMAILJS_TEMPLATE_STUDIO = "studio_registered";
+const EMAILJS_TEMPLATE_ADMIN = "admin_notification";
+const EMAILJS_PUBLIC_KEY = "ya4ajibqy-aUf00Gl";
 const ADMIN_EMAILS = ["marcel@amberjade.co.za", "rochelle@amberjade.co.za"];
 
 async function sendEmail(templateId, params) {
@@ -84,29 +84,29 @@ export default function StudioRegister({ onBack, onSuccess, notify }) {
         if (error.code === "23505") setError("A studio with this email or code already exists. Please use a different email.");
         else setError("Registration failed: " + error.message);
       } else {
-        setSubmitted(true);
-      // Email to studio
-      sendEmail(EMAILJS_TEMPLATE_STUDIO, {
-        to_email: form.studio_email,
-        to_name: form.studio_owner_name || form.studio_name,
-        studio_name: form.studio_name,
-        studio_code: finalCode,
-        studio_email: form.studio_email,
-        message: "Your studio registration has been submitted successfully. Once approved by admin you can log in using your studio email and the password you set during registration."
-      });
-      // Email to admins
-      for (const adminEmail of ADMIN_EMAILS) {
-        sendEmail(EMAILJS_TEMPLATE_ADMIN, {
-          to_email: adminEmail,
-          to_name: "Grande National Admin",
+        // Send confirmation email to studio
+        sendEmail(EMAILJS_TEMPLATE_STUDIO, {
+          to_email: form.studio_email,
+          to_name: form.studio_owner_name || form.studio_name,
           studio_name: form.studio_name,
-          studio_code: finalCode,
+          studio_code: form.studio_code.trim(),
           studio_email: form.studio_email,
-          studio_owner: form.studio_owner_name,
-          studio_contact: form.studio_contact_nr,
-          message: `New studio registration received from ${form.studio_name}. Please log into the admin dashboard to review and approve.`
+          message: "Your studio registration has been submitted successfully. Once approved by admin you can log in using your studio email and the password you set during registration."
         });
-      }
+        // Send notification emails to admins
+        for (const adminEmail of ADMIN_EMAILS) {
+          sendEmail(EMAILJS_TEMPLATE_ADMIN, {
+            to_email: adminEmail,
+            to_name: "Grande National Admin",
+            studio_name: form.studio_name,
+            studio_code: form.studio_code.trim(),
+            studio_email: form.studio_email,
+            studio_owner: form.studio_owner_name,
+            studio_contact: form.studio_contact_nr,
+            message: `New studio registration received from ${form.studio_name}. Please log into the admin dashboard to review and approve.`
+          });
+        }
+        setSubmitted(true);
       }
     } catch(e) { notify("Error: "+e.message,"#c0392b"); }
     setLoading(false);
