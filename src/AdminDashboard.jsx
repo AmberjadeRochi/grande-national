@@ -5,6 +5,32 @@ import JSZip from "jszip";
 
 const ADMIN_PASSWORD = "ROOS"; // Change this to your password
 
+// EmailJS config
+const EMAILJS_SERVICE_ID = "service_pu3z5w7";
+const EMAILJS_PUBLIC_KEY = "ya4ajibqy-aUf00Gl";
+const EMAILJS_TEMPLATE_APPROVED = "studio_approved";
+
+async function sendEmail(templateId, params) {
+  try {
+    const res = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        service_id: EMAILJS_SERVICE_ID,
+        template_id: templateId,
+        user_id: EMAILJS_PUBLIC_KEY,
+        template_params: params
+      })
+    });
+    const text = await res.text();
+    console.log("EmailJS response:", res.status, text);
+    return res.status === 200;
+  } catch(e) { 
+    console.log("Email error:", e); 
+    return false;
+  }
+}
+
 export default function AdminDashboard({ onBack, notify }) {
   const [authed, setAuthed] = useState(false);
   const [pw, setPw] = useState("");
@@ -72,7 +98,17 @@ export default function AdminDashboard({ onBack, notify }) {
     const { error } = await supabase.from("studios").update({ status:"approved" }).eq("id", studio.id);
     if (error) { notify("Error: "+error.message,"#c0392b"); return; }
     setStudios(prev=>prev.map(s=>s.id===studio.id?{...s,status:"approved"}:s));
-    notify(`✓ ${studio.studio_name} approved!`);
+    // Send approval email to studio
+    console.log("Sending approval email to:", studio.studio_email);
+    const sent = await sendEmail(EMAILJS_TEMPLATE_APPROVED, {
+      to_email: studio.studio_email,
+      to_name: studio.studio_owner_name || studio.studio_name,
+      studio_name: studio.studio_name,
+      studio_code: studio.studio_code,
+      studio_email: studio.studio_email,
+      reply_to: "rochelle@amberjade.co.za",
+    });
+    notify(`✓ ${studio.studio_name} approved! ${sent ? "Email sent ✓" : "Email failed — check console"}`);
   };
 
   const rejectStudio = async (studio) => {
