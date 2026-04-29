@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase, S, Spinner, C } from "./App.jsx";
 
 // EmailJS config - fill in your IDs from emailjs.com
@@ -52,16 +52,11 @@ export default function StudioRegister({ onBack, onSuccess, notify }) {
     if (!form.studio_name||!form.studio_email||!form.password) { notify("Please fill in all required fields","#c0392b"); return; }
     if (form.password !== form.confirm_password) { notify("Passwords do not match","#c0392b"); return; }
     if (form.password.length < 6) { notify("Password must be at least 6 characters","#c0392b"); return; }
+    if (locked) {
+      setError("Studio registrations are currently closed. Please contact the competition organiser.");
+      return;
+    }
     setLoading(true);
-    try {
-      // Check if submissions are locked
-      const { data: settings } = await supabase.from("app_settings").select("value").eq("key","submissions_locked").single().catch(()=>({data:null}));
-      if (settings?.value === "true") {
-        setError("Studio registrations are currently closed. Please contact the competition organiser.");
-        setLoading(false);
-        return;
-      }
-    } catch(e) { /* continue */ }
     try {
       const { error } = await supabase.from("studios").insert({
         studio_name: form.studio_name.trim(),
