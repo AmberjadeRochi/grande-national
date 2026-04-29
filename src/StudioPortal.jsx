@@ -1,277 +1,624 @@
-import { useState, useEffect, useCallback } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { useState, useEffect, useRef } from "react";
+import { supabase, S, Spinner, AudioBars, GENRES, AGE_GROUPS, PRICING, calcAge, calcAgeGroup, membershipCode, groupType, groupFee, C } from "./App.jsx";
 
-// ─── SUPABASE ────────────────────────────────────────────────────────────────
-const SUPABASE_URL = "https://xyezjpubmveizkzqbxue.supabase.co";
-const SUPABASE_KEY = "sb_publishable_lmRXMFg_FO5W0J8uHXnANA_Tk2SR8ed";
-export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+export default function StudioPortal({ session, onLogout, notify }) {
+  const [tab, setTab] = useState("dancers");
+  const [dancers, setDancers] = useState([]);
+  const [solos, setSolos] = useState([]);
+  const [groups, setGroups] = useState([]);
+  const [groupMembers, setGroupMembers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [playingUrl, setPlayingUrl] = useState(null);
+  const audioRef = useRef(null);
 
-// ─── CONSTANTS ───────────────────────────────────────────────────────────────
-export const GENRES = ["Contemporary","Lyrical","Ballet","Repertoire","Jazz","Acrobatics","Hip-Hop","Open"];
-export const AGE_GROUPS = [
-  "Petite (6 & under)",
-  "Mini (7–9)",
-  "Children (10–12)",
-  "Junior (13–15)",
-  "Senior (16 & older)",
-];
-export const PRICING = { registration: 300, solo: 300, duo: 200, small_group: 180, large_group: 180 };
+  // modals
+  const [showAddDancer, setShowAddDancer] = useState(false);
+  const [showAddSolo, setShowAddSolo] = useState(null); // dancer object
+  const [showAddGroup, setShowAddGroup] = useState(false);
+  const [showEditDancer, setShowEditDancer] = useState(null);
+  const [showEditSolo, setShowEditSolo] = useState(null);
+  const [showEditGroup, setShowEditGroup] = useState(null);
+  const [showGroupMembers, setShowGroupMembers] = useState(null);
 
-// ─── HELPERS ─────────────────────────────────────────────────────────────────
-export function calcAge(dob) {
-  const today = new Date(), birth = new Date(dob);
-  let age = today.getFullYear() - birth.getFullYear();
-  if (today.getMonth() < birth.getMonth() || (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())) age--;
-  return age;
-}
-export function calcAgeGroup(age) {
-  if (age <= 6) return "Petite (6 & under)";
-  if (age <= 9) return "Mini (7–9)";
-  if (age <= 12) return "Children (10–12)";
-  if (age <= 15) return "Junior (13–15)";
-  return "Senior (16 & older)";
-}
-export function membershipCode(studioCode, firstName, lastName, dob) {
-  const initials = `${firstName[0]}${lastName[0]}`.toUpperCase();
-  const dobStr = dob.replace(/-/g, "");
-  return `${studioCode}-${initials}-${dobStr}`;
-}
-export function groupType(count) {
-  if (count === 2) return "Duo";
-  if (count <= 7) return "Small Group";
-  return "Large Group";
-}
-export function groupFee(count) {
-  if (count === 2) return PRICING.duo;
-  return PRICING.small_group;
-}
-
-// ─── SHARED UI ───────────────────────────────────────────────────────────────
-export function Spinner({ color = "#F27C20", size = 18 }) {
-  return (
-    <>
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-      <span style={{ display:"inline-block", width:size, height:size, border:`2px solid ${color}30`, borderTop:`2px solid ${color}`, borderRadius:"50%", animation:"spin .7s linear infinite", flexShrink:0 }} />
-    </>
-  );
-}
-export function Toast({ msg, color = "#1a6b3a" }) {
-  return (
-    <div style={{ position:"fixed", bottom:28, right:28, background:color, color:"#fff", padding:"13px 22px", borderRadius:10, fontFamily:"Georgia,serif", zIndex:9999, boxShadow:"0 8px 32px rgba(0,0,0,.5)", fontSize:14, maxWidth:340, lineHeight:1.5 }}>
-      {msg}
-    </div>
-  );
-}
-export function AudioBars({ playing }) {
-  return (
-    <>
-      <style>{`@keyframes bar{to{height:3px}}`}</style>
-      <span style={{ display:"inline-flex", alignItems:"flex-end", gap:2, height:14, marginLeft:6 }}>
-        {[10,16,8,14].map((h,i)=>(
-          <span key={i} style={{ display:"block", width:3, borderRadius:2, background:"#F27C20", height:playing?`${h}px`:"3px", animation:playing?`bar .6s ease-in-out ${i*.12}s infinite alternate`:"none", transition:"height .3s" }} />
-        ))}
-      </span>
-    </>
-  );
-}
-// ─── GOOGLE FONTS ────────────────────────────────────────────────────────────
-const fontLink = document.createElement("link");
-fontLink.href = "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Montserrat:wght@300;400;500&display=swap";
-fontLink.rel = "stylesheet";
-document.head.appendChild(fontLink);
-
-// ─── BRAND COLOURS ───────────────────────────────────────────────────────────
-export const C = {
-  bg:      "#000000",
-  surface: "#0f0f0f",
-  border:  "#1e1e1e",
-  accent:  "#F27C20",
-  text:    "#ffffff",
-  muted:   "#888888",
-};
-
-export const S = {
-  app: { minHeight:"100vh", background:C.bg, fontFamily:"'Cormorant Garamond', Georgia, serif", color:C.text },
-  card: { background:C.surface, border:`1px solid ${C.border}`, borderRadius:6, padding:28, color:"#ffffff" },
-  input: { width:"100%", background:"#0a0a0a", border:`1px solid #2a2a2a`, borderRadius:6, padding:"13px 16px", color:"#ffffff", fontFamily:"'Montserrat', sans-serif", fontSize:15, outline:"none", boxSizing:"border-box" },
-  select: { width:"100%", background:"#0a0a0a", border:`1px solid #2a2a2a`, borderRadius:6, padding:"13px 16px", color:"#ffffff", fontFamily:"'Montserrat', sans-serif", fontSize:15, outline:"none", boxSizing:"border-box" },
-  btn: (color="#F27C20") => ({ background:color, color:"#ffffff", border:"none", borderRadius:6, padding:"12px 32px", fontFamily:"'Montserrat', sans-serif", fontSize:13, fontWeight:"500", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8, letterSpacing:"0.06em" }),
-  ghost: (color="#F27C20") => ({ background:"transparent", color, border:`1px solid ${color}`, borderRadius:6, padding:"10px 22px", fontFamily:"'Montserrat', sans-serif", fontSize:13, cursor:"pointer" }),
-  label: { display:"block", fontSize:11, letterSpacing:"0.12em", textTransform:"uppercase", color:"#ffffff", marginBottom:7, fontFamily:"'Montserrat', sans-serif" },
-  tag: (c) => ({ background:`${c}20`, color:c, borderRadius:4, padding:"3px 11px", fontSize:11, fontWeight:"500", whiteSpace:"nowrap", display:"inline-block", fontFamily:"'Montserrat', sans-serif" }),
-  back: { background:"transparent", color:"#ffffff", border:`1px solid #2a2a2a`, borderRadius:6, padding:"8px 18px", fontFamily:"'Montserrat', sans-serif", fontSize:12, cursor:"pointer", marginBottom:28 },
-  disclaimer: { marginTop:24, padding:"14px 18px", background:"#0a0600", border:`1px solid #F27C2044`, borderRadius:6, fontSize:13, color:"#F27C20", lineHeight:1.7, fontFamily:"'Montserrat', sans-serif" },
-  error: { padding:"10px 14px", background:"#2a0a0a", border:"1px solid #c0392b88", borderRadius:6, fontSize:13, color:"#ff6b6b", fontFamily:"'Montserrat', sans-serif", marginTop:4, lineHeight:1.5 },,
-};
-
-// ─── IMPORTS ─────────────────────────────────────────────────────────────────
-import StudioRegister from "./StudioRegister.jsx";
-import StudioPortal from "./StudioPortal.jsx";
-import AdminDashboard from "./AdminDashboard.jsx";
-
-// ─── MAIN APP ────────────────────────────────────────────────────────────────
-export default function App() {
-  const [portal, setPortal] = useState("home");
-  const [studioSession, setStudioSession] = useState(null);
-  const [stats, setStats] = useState({ studios:0, dancers:0, solos:0, groups:0 });
-  const [notification, setNotification] = useState(null);
-  const [showLogin, setShowLogin] = useState(false);
-
-  const notify = useCallback((msg, color="#1a6b3a") => {
-    setNotification({ msg, color });
-    setTimeout(() => setNotification(null), 4000);
-  }, []);
-
-  useEffect(() => {
-    const saved = sessionStorage.getItem("studioSession");
-    if (saved) { try { setStudioSession(JSON.parse(saved)); } catch(e) {} }
-    loadStats();
-  }, []);
-
-  const loadStats = async () => {
+  const load = async () => {
+    setLoading(true);
     try {
-      const [{ count: s }, { count: d }, { count: so }, { count: g }] = await Promise.all([
-        supabase.from("studios").select("*", { count:"exact", head:true }).eq("status","approved"),
-        supabase.from("dancers").select("*", { count:"exact", head:true }),
-        supabase.from("solo_entries").select("*", { count:"exact", head:true }),
-        supabase.from("group_entries").select("*", { count:"exact", head:true }),
+      const [r1, r2, r3, r4] = await Promise.all([
+        supabase.from("dancers").select("*").eq("studio_code", session.studio_code).order("last_name"),
+        supabase.from("solo_entries").select("*").eq("studio_code", session.studio_code).order("created_at"),
+        supabase.from("group_entries").select("*").eq("studio_code", session.studio_code).order("created_at"),
+        supabase.from("group_members").select("*"),
       ]);
-      setStats({ studios: s||0, dancers: d||0, solos: so||0, groups: g||0 });
-    } catch(e) { console.error("Stats error:", e); }
+      if (r1.error) throw r1.error;
+      setDancers(r1.data||[]); setSolos(r2.data||[]); setGroups(r3.data||[]); setGroupMembers(r4.data||[]);
+    } catch(e) { notify("Load error: "+e.message, "#c0392b"); }
+    setLoading(false);
   };
 
-  const loginStudio = (studio) => {
-    setStudioSession(studio);
-    sessionStorage.setItem("studioSession", JSON.stringify(studio));
-    setShowLogin(false);
-    setPortal("studio");
-  };
-  const logoutStudio = () => {
-    setStudioSession(null);
-    sessionStorage.removeItem("studioSession");
-    setPortal("home");
+  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    if (!audioRef.current) return;
+    if (playingUrl) { audioRef.current.src = playingUrl; audioRef.current.play().catch(()=>{}); }
+    else { audioRef.current.pause(); audioRef.current.src=""; }
+  }, [playingUrl]);
+
+  // ── Invoice calculation ──
+  const invoice = () => {
+    const regFees = dancers.length * PRICING.registration;
+    const soloFees = solos.length * PRICING.solo;
+    const groupFees = groups.reduce((acc, g) => acc + g.total_fee, 0);
+    return { regFees, soloFees, groupFees, total: regFees + soloFees + groupFees };
   };
 
-  if (portal === "studio-register") return <StudioRegister onBack={() => setPortal("home")} onSuccess={() => { notify("✓ Registration submitted! Admin will approve your studio shortly."); setPortal("home"); }} notify={notify} />;
-  if (portal === "studio") return <StudioPortal session={studioSession} onLogout={logoutStudio} notify={notify} />;
-  if (portal === "admin") return <AdminDashboard onBack={() => setPortal("home")} notify={notify} />;
+  const inv = invoice();
 
   return (
     <div style={S.app}>
-      {/* Top bar */}
-      <div style={{ background:"#111111", borderBottom:"1px solid #1e1e1e", padding:"14px 40px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-        <img src="/Dance-Narrative-Grande-National-Logo.webp" alt="Grande National" style={{ height:40, opacity:.9 }} />
-        <div style={{ fontFamily:"'Montserrat', sans-serif", fontSize:10, letterSpacing:"0.2em", color:"#ffffff", textTransform:"uppercase" }}>Competition Management Portal</div>
+      <audio ref={audioRef} onEnded={()=>setPlayingUrl(null)} />
+
+      {/* Header */}
+      <div style={{ background:"#0f0f0f", borderBottom:"1px solid #1e1e1e", padding:"16px 24px", display:"flex", alignItems:"center", justifyContent:"space-between", position:"sticky", top:0, zIndex:100 }}>
+        <div>
+          <div style={{ fontSize:10, letterSpacing:"0.3em", color:"#F27C20", textTransform:"uppercase" }}>Studio Portal</div>
+          <div style={{ fontSize:18, marginTop:2 }}>{session.studio_name} <span style={{ fontSize:12, color:"#ffffff" }}>· {session.studio_code}</span></div>
+        </div>
+        <button style={S.ghost("#666")} onClick={onLogout}>Logout</button>
       </div>
 
-      <div style={{ maxWidth:900, margin:"0 auto", padding:"80px 24px 56px" }}>
-        <div style={{ textAlign:"center", marginBottom:80 }}>
-          <img src="/Dance-Narrative-Grande-National-Logo.webp" alt="Grande National" style={{ width:160, opacity:.95, marginBottom:32 }} />
-          <div style={{ fontSize:10, letterSpacing:"0.5em", color:C.accent, textTransform:"uppercase", marginBottom:20, fontFamily:"'Montserrat', sans-serif" }}>Dance Narrative Presents</div>
-          <h1 style={{ fontSize:"clamp(48px,9vw,88px)", fontWeight:300, margin:0, lineHeight:.95, letterSpacing:"0.05em", textTransform:"uppercase", fontFamily:"'Cormorant Garamond', serif" }}>
-            Grande<br /><span style={{ color:C.accent, fontStyle:"italic" }}>National</span>
-          </h1>
-          <p style={{ color:"#ffffff", marginTop:20, fontSize:11, letterSpacing:"0.25em", textTransform:"uppercase", fontFamily:"'Montserrat', sans-serif" }}>Competition Registration Portal</p>
-        </div>
-
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))", gap:16, marginBottom:40 }}>
+      <div style={{ maxWidth:980, margin:"0 auto", padding:"32px 24px" }}>
+        {/* Invoice summary */}
+        <div style={{ ...S.card, marginBottom:24, display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))", gap:0, padding:0, overflow:"hidden" }}>
           {[
-            { icon:"→", title:"Studio Registration", sub:"New studios — register your dance school to participate", key:"studio-register", color:"#F27C20" },
-            { icon:"→", title:"Studio Portal", sub:"Registered studios — manage dancers, entries & music", key:"studio-login", color:"#F27C20" },
-          ].map(p => (
-            <button key={p.key} onClick={() => {
-              if (p.key === "studio-login") {
-                if (studioSession) setPortal("studio");
-                else setShowLogin(true);
-              } else setPortal(p.key);
-            }}
-              style={{ ...S.card, cursor:"pointer", textAlign:"left", border:"1px solid #242424", transition:"all .2s" }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor=p.color; e.currentTarget.style.transform="translateY(-4px)"; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor="#242424"; e.currentTarget.style.transform="translateY(0)"; }}>
-              <div style={{ fontSize:28, marginBottom:16, color:C.accent, fontFamily:"'Montserrat', sans-serif", fontWeight:300 }}>{p.icon}</div>
-              <div style={{ fontSize:18, color:p.color, marginBottom:8 }}>{p.title}</div>
-              <div style={{ fontSize:14, color:"#cccccc", lineHeight:1.8, fontSize:14 }}>{p.sub}</div>
-              <div style={{ marginTop:20, fontSize:12, color:"#F27C20", letterSpacing:"0.1em", fontFamily:"'Montserrat', sans-serif" }}>Enter →</div>
-            </button>
+            { label:"Dancers", value:dancers.length, sub:`R${inv.regFees} reg fees`, color:"#F27C20" },
+            { label:"Solo Entries", value:solos.length, sub:`R${inv.soloFees}`, color:"#F27C20" },
+            { label:"Group Entries", value:groups.length, sub:`R${inv.groupFees}`, color:"#F27C20" },
+            { label:"Estimated Total", value:`R${inv.total}`, sub:"excl. final invoice", color:"#F27C20" },
+          ].map((st,i,arr)=>(
+            <div key={st.label} style={{ padding:"18px 20px", textAlign:"center", borderRight:i<arr.length-1?"1px solid #1e1e1e":"none" }}>
+              <div style={{ fontSize:26, color:st.color, fontStyle:"italic" }}>{st.value}</div>
+              <div style={{ fontSize:10, color:"#ffffff", textTransform:"uppercase", letterSpacing:"0.1em", marginTop:2 }}>{st.label}</div>
+              <div style={{ fontSize:11, color:"#ffffff", marginTop:2 }}>{st.sub}</div>
+            </div>
           ))}
         </div>
-        <div style={{ textAlign:"center", marginTop:16 }}>
-          <button onClick={()=>setPortal("admin")} style={{ background:"none", border:"none", color:"#ffffff", fontSize:12, cursor:"pointer", fontFamily:"Georgia,serif", letterSpacing:"0.1em" }}>Admin Access</button>
+
+        {/* Tabs */}
+        <div style={{ display:"flex", gap:4, marginBottom:24, background:"#141414", padding:4, borderRadius:10, border:"1px solid #1e1e1e" }}>
+          {[["dancers","👥 Dancers"],["solos","🎭 Solos"],["groups","👯 Groups & Duos"]].map(([key,label])=>(
+            <button key={key} onClick={()=>setTab(key)} style={{ flex:1, padding:"10px", borderRadius:8, border:"none", background:tab===key?"#F27C20":"transparent", color:tab===key?"#0a0a0a":"#555", cursor:"pointer", fontFamily:"Georgia,serif", fontSize:14, fontWeight:tab===key?"bold":"normal", transition:"all .2s" }}>{label}</button>
+          ))}
         </div>
-        <div style={S.disclaimer}>⚠️ <strong>Please wait for your final invoice before making payment.</strong> All fees displayed are estimates only.</div>
+
+        {loading ? (
+          <div style={{ textAlign:"center", padding:60, color:"#ffffff" }}><Spinner /><div style={{marginTop:12}}>Loading...</div></div>
+        ) : (
+          <>
+            {/* ── DANCERS TAB ── */}
+            {tab === "dancers" && (
+              <div>
+                <div style={{ display:"flex", gap:10, marginBottom:16, flexWrap:"wrap" }}>
+                  <button style={S.btn("#F27C20")} onClick={()=>setShowAddDancer(true)}>+ Add Dancer</button>
+                </div>
+                {dancers.length === 0 ? (
+                  <div style={{ ...S.card, textAlign:"center", color:"#ffffff", padding:48, fontStyle:"italic" }}>No dancers yet. Add dancers one by one or import from Excel.</div>
+                ) : (
+                  <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+                    {dancers.map(d => {
+                      const dSolos = solos.filter(s=>s.dancer_id===d.id);
+                      const dGroups = groupMembers.filter(m=>m.dancer_id===d.id);
+                      return (
+                        <div key={d.id} style={{ ...S.card, padding:"16px 20px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:12 }}>
+                          <div style={{ flex:1 }}>
+                            <div style={{ fontWeight:"bold", fontSize:16 }}>{d.first_name} {d.last_name}</div>
+                            <div style={{ fontSize:12, color:"#ffffff", marginTop:3 }}>
+                              {d.membership_code} · {d.gender} · Age {d.age} · {d.age_group}
+                            </div>
+                            <div style={{ display:"flex", gap:8, marginTop:8, flexWrap:"wrap" }}>
+                              <span style={S.tag("#F27C20")}>{dSolos.length} solo{dSolos.length!==1?"s":""}</span>
+                              <span style={S.tag("#F27C20")}>{dGroups.length} group entry/ies</span>
+                              <span style={S.tag("#F27C20")}>R{d.registration_fee} reg</span>
+                            </div>
+                          </div>
+                          <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+                            <button onClick={()=>setShowAddSolo(d)} style={S.ghost("#F27C20")}>+ Solo</button>
+                            <button onClick={()=>setShowEditDancer(d)} style={S.ghost("#666")}>Edit</button>
+                            <button onClick={async()=>{ if(!confirm(`Delete ${d.first_name}? This removes all their entries.`)) return; await supabase.from("dancers").delete().eq("id",d.id); await load(); notify(`${d.first_name} removed`); }} style={S.ghost("#F27C20")}>✕</button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── SOLOS TAB ── */}
+            {tab === "solos" && (
+              <div>
+                <div style={{ display:"flex", gap:10, marginBottom:16 }}>
+                  {dancers.length > 0 && <button style={S.btn("#F27C20")} onClick={()=>setShowAddSolo(dancers[0])}>+ Add Solo Entry</button>}
+                </div>
+                {solos.length === 0 ? (
+                  <div style={{ ...S.card, textAlign:"center", color:"#ffffff", padding:48, fontStyle:"italic" }}>No solo entries yet. Go to Dancers tab to add solos per dancer.</div>
+                ) : (
+                  <div>
+                    {GENRES.map(genre => {
+                      const genreSolos = solos.filter(s=>s.genre===genre);
+                      if (!genreSolos.length) return null;
+                      return (
+                        <div key={genre} style={{ marginBottom:24 }}>
+                          <div style={{ fontSize:11, letterSpacing:"0.15em", color:"#F27C20", textTransform:"uppercase", marginBottom:10 }}>{genre} ({genreSolos.length})</div>
+                          <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                            {genreSolos.map(s => {
+                              const url = (s.file_path ? `https://xyezjpubmveizkzqbxue.supabase.co/storage/v1/object/public/mp3s/${s.file_path}` : null);
+                              return (
+                                <div key={s.id} style={{ ...S.card, padding:"14px 18px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+                                  <div>
+                                    <div style={{fontWeight:"bold"}}>{s.dancer_name}</div>
+                                    <div style={{fontSize:12,color:"#cccccc",marginTop:2}}>"{s.song_title}" · {s.age_group} · R{s.fee}</div>
+                                  </div>
+                                  <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                                    {url && <button onClick={()=>setPlayingUrl(p=>p===url?null:url)} style={{background:"#F27C2018",border:"none",borderRadius:6,padding:"6px 12px",color:"#F27C20",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center"}}>
+                                      {playingUrl===url?"⏸":"▶"}<AudioBars playing={playingUrl===url}/>
+                                    </button>}
+                                    <button onClick={()=>setShowEditSolo(s)} style={S.ghost("#666")}>Edit</button>
+                                    <button onClick={async()=>{ if(!confirm("Delete this solo entry?")) return; await supabase.from("solo_entries").delete().eq("id",s.id); await load(); notify("Solo removed"); }} style={S.ghost("#F27C20")}>✕</button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── GROUPS TAB ── */}
+            {tab === "groups" && (
+              <div>
+                <div style={{ display:"flex", gap:10, marginBottom:16 }}>
+                  <button style={S.btn("#F27C20")} onClick={()=>setShowAddGroup(true)}>+ Add Group / Duo</button>
+                </div>
+                {groups.length === 0 ? (
+                  <div style={{ ...S.card, textAlign:"center", color:"#ffffff", padding:48, fontStyle:"italic" }}>No group or duo entries yet.</div>
+                ) : (
+                  <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+                    {groups.map(g => {
+                      const members = groupMembers.filter(m=>m.group_entry_id===g.id);
+                      const url = (g.file_path ? `https://xyezjpubmveizkzqbxue.supabase.co/storage/v1/object/public/mp3s/${g.file_path}` : null);
+                      return (
+                        <div key={g.id} style={S.card}>
+                          <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:12 }}>
+                            <div style={{flex:1}}>
+                              <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+                                <div style={{fontWeight:"bold",fontSize:16}}>{g.group_name}</div>
+                                <span style={S.tag("#F27C20")}>{g.group_type}</span>
+                                <span style={S.tag("#F27C20")}>{g.genre}</span>
+                              </div>
+                              <div style={{fontSize:12,color:"#cccccc",marginTop:4}}>"{g.song_title}" · {g.age_group} · {g.member_count} dancers · R{g.total_fee} total</div>
+                              <button onClick={()=>setShowGroupMembers(g)} style={{...S.ghost("#F27C20"),padding:"4px 12px",fontSize:12,marginTop:10}}>
+                                👥 View {members.length} member{members.length!==1?"s":""}
+                              </button>
+                            </div>
+                            <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+                              {url && <button onClick={()=>setPlayingUrl(p=>p===url?null:url)} style={{background:"#F27C2018",border:"none",borderRadius:6,padding:"6px 12px",color:"#F27C20",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center"}}>
+                                {playingUrl===url?"⏸":"▶"}<AudioBars playing={playingUrl===url}/>
+                              </button>}
+                              <button onClick={()=>setShowEditGroup(g)} style={S.ghost("#666")}>Edit</button>
+                              <button onClick={async()=>{ if(!confirm(`Delete group "${g.group_name}"?`)) return; await supabase.from("group_entries").delete().eq("id",g.id); await load(); notify("Group removed"); }} style={S.ghost("#F27C20")}>✕</button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        )}
+
+        <div style={S.disclaimer}>⚠️ Please wait for your final invoice before making payment. All fees displayed are estimates only.</div>
       </div>
 
-      {showLogin && <LoginModal onClose={() => setShowLogin(false)} onLogin={loginStudio} notify={notify} />}
-      {notification && <Toast msg={notification.msg} color={notification.color} />}
+      {/* Modals */}
+      {showAddDancer && <AddDancerModal session={session} onClose={()=>setShowAddDancer(false)} onSave={async()=>{ await load(); setShowAddDancer(false); notify("✓ Dancer added!"); }} notify={notify} />}
+      {showEditDancer && <EditDancerModal dancer={showEditDancer} onClose={()=>setShowEditDancer(null)} onSave={async()=>{ await load(); setShowEditDancer(null); notify("✓ Dancer updated!"); }} notify={notify} />}
+      {showAddSolo && <AddSoloModal dancer={showAddSolo} dancers={dancers} session={session} onClose={()=>setShowAddSolo(null)} onSave={async()=>{ await load(); setShowAddSolo(null); notify("✓ Solo entry added!"); }} notify={notify} />}
+      {showEditSolo && <EditSoloModal solo={showEditSolo} onClose={()=>setShowEditSolo(null)} onSave={async()=>{ await load(); setShowEditSolo(null); notify("✓ Solo updated!"); }} notify={notify} />}
+      {showAddGroup && <AddGroupModal dancers={dancers} session={session} onClose={()=>setShowAddGroup(false)} onSave={async()=>{ await load(); setShowAddGroup(false); notify("✓ Group entry added!"); }} notify={notify} />}
+      {showEditGroup && <EditGroupModal group={showEditGroup} dancers={dancers} groupMembers={groupMembers.filter(m=>m.group_entry_id===showEditGroup.id)} onClose={()=>setShowEditGroup(null)} onSave={async()=>{ await load(); setShowEditGroup(null); notify("✓ Group updated!"); }} notify={notify} />}
+      {showGroupMembers && <GroupMembersModal group={showGroupMembers} members={groupMembers.filter(m=>m.group_entry_id===showGroupMembers.id)} onClose={()=>setShowGroupMembers(null)} />}
     </div>
   );
 }
 
-function LoginModal({ onClose, onLogin, notify }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPw, setShowPw] = useState(false);
+// ── ADD DANCER MODAL ──────────────────────────────────────────────
+function AddDancerModal({ session, onClose, onSave, notify }) {
+  const [form, setForm] = useState({ first_name:"", last_name:"", date_of_birth:"", gender:"Female" });
   const [loading, setLoading] = useState(false);
-  const [forgot, setForgot] = useState(false);
-  const [resetSent, setResetSent] = useState(false);
-  const [pwError, setPwError] = useState("");
+  const [error, setError] = useState("");
+  const set = (k,v) => { setForm(p=>({...p,[k]:v})); setError(""); };
+  const age = form.date_of_birth ? calcAge(form.date_of_birth) : null;
+  const ageGroup = age !== null ? calcAgeGroup(age) : "";
 
-  const handleLogin = async () => {
-    if (!email || !password) { setPwError("Please enter your email and password."); return; }
-    setLoading(true); setPwError("");
+  const save = async () => {
+    if (!form.first_name.trim()||!form.last_name.trim()||!form.date_of_birth||!form.gender) { setError("All fields are required."); return; }
+    setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("studios")
-        .select("*")
-        .eq("studio_email", email.trim().toLowerCase())
-        .eq("status", "approved")
-        .single();
-      if (error || !data) { setPwError("Studio not found or not yet approved by admin."); setLoading(false); return; }
-      const encoded = btoa(unescape(encodeURIComponent(password)));
-      if (data.password_hash !== encoded) { setPwError("Incorrect password — please try again."); setLoading(false); return; }
-      onLogin(data);
-    } catch(e) { setPwError("Login error: " + e.message); }
+      const code = membershipCode(session.studio_code, form.first_name, form.last_name, form.date_of_birth);
+      const {error} = await supabase.from("dancers").insert({ ...form, age, age_group:ageGroup, studio_code:session.studio_code, studio_name:session.studio_name, membership_code:code, registration_fee:PRICING.registration }); if(error) throw error;
+      onSave();
+    } catch(e) { setError(e.message.includes("duplicate")?"This dancer already exists in your studio.":e.message); }
     setLoading(false);
   };
 
   return (
-    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,.88)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:1000, padding:24 }}>
-      <div style={{ ...S.card, width:"100%", maxWidth:420 }}>
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:24 }}>
-          <div style={{ fontSize:18, color:"#F27C20" }}>{forgot?"Reset Password":"Studio Login"}</div>
-          <button onClick={onClose} style={{ background:"none", border:"none", color:"#ffffff", fontSize:20, cursor:"pointer" }}>✕</button>
+    <Modal title="Add Dancer" onClose={onClose} color="#F27C20">
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+          <div><label style={S.label}>First Name *</label><input style={S.input} value={form.first_name} onChange={e=>set("first_name",e.target.value)} placeholder="Sofia" /></div>
+          <div><label style={S.label}>Last Name *</label><input style={S.input} value={form.last_name} onChange={e=>set("last_name",e.target.value)} placeholder="Martini" /></div>
         </div>
-        {resetSent ? (
-          <div style={{ textAlign:"center", color:"#cccccc", fontSize:14, lineHeight:1.7 }}>
-            Please contact the competition admin to reset your password.<br/>
-            <button onClick={()=>{setForgot(false);setResetSent(false);}} style={{ ...S.ghost("#F27C20"), marginTop:16 }}>← Back to Login</button>
+        <div><label style={S.label}>Date of Birth *</label><input style={S.input} type="date" value={form.date_of_birth} onChange={e=>set("date_of_birth",e.target.value)} /></div>
+        {age !== null && <div style={{padding:"8px 12px",background:"#F27C2018",borderRadius:8,fontSize:13,color:"#F27C20"}}>Age: {age} · {ageGroup}</div>}
+        <div><label style={S.label}>Gender *</label>
+          <select style={S.select} value={form.gender} onChange={e=>set("gender",e.target.value)}>
+            <option>Female</option><option>Male</option>
+          </select>
+        </div>
+        <div style={{padding:"8px 12px",background:"#1a1200",borderRadius:8,fontSize:12,color:"#a08c40"}}>Registration fee: R{PRICING.registration} (once-off per dancer)</div>
+        <button style={S.btn("#F27C20")} onClick={save} disabled={loading}>{loading?<Spinner color="#0a0a0a"/>:"Add Dancer"}</button>
+      </div>
+    </Modal>
+  );
+}
+
+// ── EDIT DANCER MODAL ──
+function EditDancerModal({ dancer, onClose, onSave, notify }) {
+  const [form, setForm] = useState({ first_name:dancer.first_name, last_name:dancer.last_name, date_of_birth:dancer.date_of_birth, gender:dancer.gender });
+  const [loading, setLoading] = useState(false);
+  const set = (k,v) => setForm(p=>({...p,[k]:v}));
+  const age = form.date_of_birth ? calcAge(form.date_of_birth) : dancer.age;
+  const ageGroup = calcAgeGroup(age);
+
+  const save = async () => {
+    setLoading(true);
+    try { const {error} = await supabase.from("dancers").update({ ...form, age, age_group:ageGroup }).eq("id",dancer.id); if(error) throw error; onSave(); }
+    catch(e) { notify(e.message,"#c0392b"); }
+    setLoading(false);
+  };
+
+  return (
+    <Modal title="Edit Dancer" onClose={onClose} color="#F27C20">
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+          <div><label style={S.label}>First Name</label><input style={S.input} value={form.first_name} onChange={e=>set("first_name",e.target.value)} /></div>
+          <div><label style={S.label}>Last Name</label><input style={S.input} value={form.last_name} onChange={e=>set("last_name",e.target.value)} /></div>
+        </div>
+        <div><label style={S.label}>Date of Birth</label><input style={S.input} type="date" value={form.date_of_birth} onChange={e=>set("date_of_birth",e.target.value)} /></div>
+        {age !== null && <div style={{padding:"8px 12px",background:"#F27C2018",borderRadius:8,fontSize:13,color:"#F27C20"}}>Age: {age} · {ageGroup}</div>}
+        <div><label style={S.label}>Gender</label>
+          <select style={S.select} value={form.gender} onChange={e=>set("gender",e.target.value)}>
+            <option>Female</option><option>Male</option>
+          </select>
+        </div>
+        <button style={S.btn("#F27C20")} onClick={save} disabled={loading}>{loading?<Spinner color="#0a0a0a"/>:"Save Changes"}</button>
+      </div>
+    </Modal>
+  );
+}
+
+// ── ADD SOLO MODAL ──
+function AddSoloModal({ dancer: initialDancer, dancers, session, onClose, onSave, notify }) {
+  const [selectedDancerId, setSelectedDancerId] = useState(initialDancer?.id || "");
+  const [form, setForm] = useState({ genre:"Contemporary", song_title:"", file:null, fileName:"" });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const set = (k,v) => { setForm(p=>({...p,[k]:v})); setError(""); };
+  const dancer = dancers.find(d=>d.id===selectedDancerId) || initialDancer;
+
+  const save = async () => {
+    if (!dancer||!form.genre||!form.song_title.trim()||!form.file) { setError("All fields are required. Please select a dancer, genre, song title and upload a music file."); return; }
+    setLoading(true);
+    try {
+      const path = `${session.studio_code}/solos/${dancer.id}_${form.genre}_${Date.now()}_${form.file.name}`;
+      const {error:ue} = await supabase.storage.from("mp3s").upload(path, form.file, {upsert:true, contentType: form.file.type});
+      if(ue) { throw new Error("File upload failed: " + ue.message + ". Please check the storage bucket is set to public in Supabase."); }
+      const {error:ie} = await supabase.from("solo_entries").insert({
+        dancer_id:dancer.id, dancer_name:`${dancer.first_name} ${dancer.last_name}`,
+        membership_code:dancer.membership_code, studio_code:session.studio_code,
+        studio_name:session.studio_name, genre:form.genre, song_title:form.song_title,
+        age_group:dancer.age_group, file_name:form.file.name, file_path:path, fee:PRICING.solo
+      });
+      onSave();
+    } catch(e) { notify(e.message,"#c0392b"); }
+    setLoading(false);
+  };
+
+  return (
+    <Modal title="Add Solo Entry" onClose={onClose} color="#F27C20">
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <div><label style={S.label}>Dancer *</label>
+          <select style={S.select} value={selectedDancerId} onChange={e=>setSelectedDancerId(e.target.value)}>
+            <option value="">Select dancer...</option>
+            {dancers.map(d=><option key={d.id} value={d.id}>{d.first_name} {d.last_name}</option>)}
+          </select>
+        </div>
+        {dancer && <div style={{padding:"8px 12px",background:"#F27C2018",borderRadius:8,fontSize:12,color:"#F27C20"}}>Age group: {dancer.age_group.replace(" – Ballet/Rep point shoes optional","").replace(" – Ballet/Rep Pointe shoes optional","")}</div>}
+        <div><label style={S.label}>Genre *</label>
+          <select style={S.select} value={form.genre} onChange={e=>set("genre",e.target.value)}>
+            {GENRES.map(g=><option key={g}>{g}</option>)}
+          </select>
+        </div>
+        <div>
+          <label style={S.label}>Song Title *</label>
+          <input style={S.input} value={form.song_title} onChange={e=>set("song_title",e.target.value)} placeholder="e.g. Swan Lake Remix" />
+          <div style={{fontSize:12,color:"#F27C20",marginTop:6,fontFamily:"'Montserrat',sans-serif",lineHeight:1.6}}>
+            ⚠️ Please enter the exact song title as it should be announced on competition day. This name will be used on stage.
           </div>
-        ) : (
-          <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
-            <div>
-              <label style={S.label}>Studio Email</label>
-              <input style={S.input} type="email" value={email} onChange={e=>{setEmail(e.target.value);setPwError("");}} placeholder="info@yourstudio.co.za" />
-            </div>
-            {!forgot && (
-              <div>
-                <label style={S.label}>Password</label>
-                <div style={{position:"relative"}}>
-                  <input style={{...S.input, paddingRight:44}} type={showPw?"text":"password"} value={password} onChange={e=>{setPassword(e.target.value);setPwError("");}} onKeyDown={e=>e.key==="Enter"&&handleLogin()} placeholder="••••••••" />
-                  <button onClick={()=>setShowPw(p=>!p)} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:"#ffffff",cursor:"pointer",fontSize:16,padding:0}}>
-                    {showPw?"🙈":"👁️"}
-                  </button>
+        </div>
+        <div>
+          <label style={S.label}>MP3 / Music File *</label>
+          <div onClick={()=>document.getElementById("soloFile").click()} style={{border:"2px dashed #2e2e2e",borderRadius:10,padding:20,textAlign:"center",cursor:"pointer",background:"#1c1c1c"}}>
+            <input id="soloFile" type="file" accept=".mp3,.wav,.m4a,audio/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f)set("file",f);set("fileName",f?.name||"");}} />
+            {form.fileName?<div style={{color:"#F27C20"}}>🎵 {form.fileName}</div>:<div style={{color:"#ffffff",fontSize:13}}>📁 Click to select music file (MP3, WAV, M4A)</div>}
+          </div>
+        </div>
+        <div style={{padding:"12px 14px",background:"#1a1200",border:"1px solid #3a2e00",borderRadius:8,fontSize:12,color:"#a08c40",lineHeight:1.8}}>
+          <div>Fee: <strong>R{PRICING.solo}</strong> per solo entry</div>
+          {dancer && (form.genre==="Ballet"||form.genre==="Repertoire") && dancer.age_group==="Children (10–12)" && (
+            <div style={{marginTop:4,color:"#F27C20"}}>🩰 Ages 10–12 Ballet/Repertoire — Pointe shoes optional</div>
+          )}
+          <div style={{marginTop:4,fontSize:11,color:"#ffffff"}}>*Please wait for final invoice before making payment</div>
+        </div>
+        <button style={S.btn("#F27C20")} onClick={save} disabled={loading}>{loading?<Spinner color="#0a0a0a"/>:"Add Solo Entry"}</button>
+      </div>
+    </Modal>
+  );
+}
+
+// ── EDIT SOLO MODAL ──
+function EditSoloModal({ solo, onClose, onSave, notify }) {
+  const [form, setForm] = useState({ genre:solo.genre, song_title:solo.song_title, file:null, fileName:"" });
+  const [loading, setLoading] = useState(false);
+  const set = (k,v) => setForm(p=>({...p,[k]:v}));
+
+  const save = async () => {
+    setLoading(true);
+    try {
+      const updates = { genre:form.genre, song_title:form.song_title };
+      if (form.file) {
+        const path = `${solo.studio_code}/solos/${solo.dancer_id}_${form.genre}_${Date.now()}_${form.file.name}`;
+        await supabase.storage.from("mp3s").upload(path, form.file, {upsert:true});
+        updates.file_name = form.file.name;
+        updates.file_path = path;
+      }
+      const {error:ue} = await supabase.from("solo_entries").update(updates).eq("id",solo.id); if(ue) throw ue;
+      onSave();
+    } catch(e) { notify(e.message,"#c0392b"); }
+    setLoading(false);
+  };
+
+  return (
+    <Modal title="Edit Solo Entry" onClose={onClose} color="#F27C20">
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <div style={{padding:"8px 12px",background:"#F27C2018",borderRadius:8,fontSize:13,color:"#F27C20"}}>Dancer: {solo.dancer_name}</div>
+        <div><label style={S.label}>Genre</label>
+          <select style={S.select} value={form.genre} onChange={e=>set("genre",e.target.value)}>
+            {GENRES.map(g=><option key={g}>{g}</option>)}
+          </select>
+        </div>
+        <div><label style={S.label}>Song Title</label><input style={S.input} value={form.song_title} onChange={e=>set("song_title",e.target.value)} /></div>
+        <div>
+          <label style={S.label}>Replace Music File (optional)</label>
+          <div onClick={()=>document.getElementById("editSoloFile").click()} style={{border:"2px dashed #2e2e2e",borderRadius:10,padding:20,textAlign:"center",cursor:"pointer",background:"#1c1c1c"}}>
+            <input id="editSoloFile" type="file" accept=".mp3,.wav,.m4a,audio/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f){set("file",f);set("fileName",f.name);}}} />
+            {form.fileName?<div style={{color:"#F27C20"}}>🎵 {form.fileName}</div>:<div style={{color:"#ffffff",fontSize:13}}>Current: {solo.file_name}<br/><span style={{fontSize:11}}>Click to replace</span></div>}
+          </div>
+        </div>
+        <button style={S.btn("#F27C20")} onClick={save} disabled={loading}>{loading?<Spinner color="#0a0a0a"/>:"Save Changes"}</button>
+      </div>
+    </Modal>
+  );
+}
+
+// ── ADD GROUP MODAL ──
+function AddGroupModal({ dancers, session, onClose, onSave, notify }) {
+  const [form, setForm] = useState({ group_name:"", genre:"Contemporary", song_title:"", age_group:"Mini (7–9)", file:null, fileName:"" });
+  const [selectedMembers, setSelectedMembers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const set = (k,v) => setForm(p=>({...p,[k]:v}));
+
+  const memberCount = selectedMembers.length;
+  const gType = memberCount >= 2 ? groupType(memberCount) : "";
+  const feePerPerson = memberCount >= 2 ? groupFee(memberCount) : 0;
+  const totalFee = feePerPerson * memberCount;
+
+  const toggleMember = (d) => {
+    setSelectedMembers(prev => prev.find(m=>m.id===d.id) ? prev.filter(m=>m.id!==d.id) : [...prev,d]);
+  };
+
+  const save = async () => {
+    if (!form.group_name.trim()||!form.genre||!form.song_title.trim()||!form.age_group||selectedMembers.length<2||!form.file) { setError("All fields are required. Fill in group name, genre, song title, age group, select at least 2 dancers and upload music."); return; }
+    setLoading(true);
+    try {
+      const path = `${session.studio_code}/groups/${form.group_name.replace(/\s/g,"_")}_${Date.now()}_${form.file.name}`;
+      const {error:gue} = await supabase.storage.from("mp3s").upload(path, form.file, {upsert:true});
+      if(gue) throw gue;
+      const {data:entryArr, error:gie} = await supabase.from("group_entries").insert({
+        studio_code:session.studio_code, studio_name:session.studio_name,
+        group_name:form.group_name, group_type:gType, genre:form.genre,
+        song_title:form.song_title, age_group:form.age_group,
+        member_count:memberCount, fee_per_person:feePerPerson,
+        total_fee:totalFee, file_name:form.file.name, file_path:path
+      }).select(); if(gie) throw gie; const entry=entryArr[0];
+      for (const d of selectedMembers) {
+        await supabase.from("group_members").insert({ group_entry_id:entry.id, dancer_id:d.id, dancer_name:`${d.first_name} ${d.last_name}`, membership_code:d.membership_code });
+      }
+      onSave();
+    } catch(e) { notify(e.message,"#c0392b"); }
+    setLoading(false);
+  };
+
+  return (
+    <Modal title="Add Group / Duo Entry" onClose={onClose} color="#F27C20">
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <div><label style={S.label}>Group / Duo Name *</label><input style={S.input} value={form.group_name} onChange={e=>set("group_name",e.target.value)} placeholder="e.g. Leap Stars" /></div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+          <div><label style={S.label}>Genre *</label>
+            <select style={S.select} value={form.genre} onChange={e=>set("genre",e.target.value)}>
+              {GENRES.map(g=><option key={g}>{g}</option>)}
+            </select>
+          </div>
+          <div><label style={S.label}>Age Group *</label>
+            <select style={S.select} value={form.age_group} onChange={e=>set("age_group",e.target.value)}>
+              <option value="">Select age group...</option>
+              {AGE_GROUPS.map(ag=><option key={ag} value={ag}>{ag}</option>)}
+            </select>
+          </div>
+        </div>
+        <div>
+          <label style={S.label}>Song Title *</label>
+          <input style={S.input} value={form.song_title} onChange={e=>set("song_title",e.target.value)} placeholder="e.g. Hip Hop Groove" />
+          <div style={{fontSize:12,color:"#F27C20",marginTop:6,fontFamily:"'Montserrat',sans-serif",lineHeight:1.6}}>
+            ⚠️ Please enter the exact song title as it should be announced on competition day.
+          </div>
+        </div>
+        <div>
+          <label style={S.label}>Select Dancers * (click to select)</label>
+          <div style={{maxHeight:200,overflowY:"auto",display:"flex",flexDirection:"column",gap:6}}>
+            {dancers.map(d=>{
+              const sel = !!selectedMembers.find(m=>m.id===d.id);
+              return (
+                <div key={d.id} onClick={()=>toggleMember(d)} style={{padding:"10px 14px",borderRadius:8,border:`1px solid ${sel?"#F27C20":"#2e2e2e"}`,background:sel?"#F27C2018":"#1c1c1c",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <span>{d.first_name} {d.last_name} <span style={{fontSize:11,color:"#ffffff"}}>· {d.age_group}</span></span>
+                  {sel&&<span style={{color:"#F27C20"}}>✓</span>}
                 </div>
-              </div>
-            )}
-            {pwError && <div style={{padding:"8px 12px",background:"#c0392b18",border:"1px solid #c0392b44",borderRadius:8,fontSize:13,color:"#e74c3c"}}>{pwError}</div>}
-            <button style={S.btn("#F27C20")} onClick={forgot?()=>setResetSent(true):handleLogin} disabled={loading}>
-              {loading?<Spinner color="#0a0a0a"/>:forgot?"Send Reset Request":"Login →"}
-            </button>
-            <button onClick={()=>setForgot(!forgot)} style={{ background:"none", border:"none", color:"#ffffff", fontSize:13, cursor:"pointer", fontFamily:"Georgia,serif" }}>
-              {forgot?"← Back to login":"Forgot password?"}
-            </button>
+              );
+            })}
+          </div>
+        </div>
+        {memberCount >= 2 && (
+          <div style={{padding:"10px 14px",background:"#F27C2018",borderRadius:8,fontSize:13,color:"#F27C20"}}>
+            {memberCount} dancers · {gType} · R{feePerPerson}pp · <strong>Total: R{totalFee}</strong>
           </div>
         )}
+        <div>
+          <label style={S.label}>Music File *</label>
+          <div onClick={()=>document.getElementById("groupFile").click()} style={{border:"2px dashed #2e2e2e",borderRadius:10,padding:20,textAlign:"center",cursor:"pointer",background:"#1c1c1c"}}>
+            <input id="groupFile" type="file" accept=".mp3,.wav,.m4a,audio/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f){set("file",f);set("fileName",f.name);}}} />
+            {form.fileName?<div style={{color:"#F27C20"}}>🎵 {form.fileName}</div>:<div style={{color:"#ffffff",fontSize:13}}>📁 Click to select music file</div>}
+          </div>
+        </div>
+        <button style={S.btn("#F27C20")} onClick={save} disabled={loading}>{loading?<Spinner color="#fff"/>:"Add Group Entry"}</button>
+      </div>
+    </Modal>
+  );
+}
+
+// ── EDIT GROUP MODAL ──
+function EditGroupModal({ group, dancers, groupMembers, onClose, onSave, notify }) {
+  const [form, setForm] = useState({ group_name:group.group_name, genre:group.genre, song_title:group.song_title, age_group:group.age_group, file:null, fileName:"" });
+  const [selectedMembers, setSelectedMembers] = useState(groupMembers.map(m=>({ id:m.dancer_id, first_name:m.dancer_name.split(" ")[0], last_name:m.dancer_name.split(" ").slice(1).join(" "), membership_code:m.membership_code, age_group:group.age_group })));
+  const [loading, setLoading] = useState(false);
+  const set = (k,v) => setForm(p=>({...p,[k]:v}));
+  const memberCount = selectedMembers.length;
+  const gType = memberCount >= 2 ? groupType(memberCount) : "";
+  const feePerPerson = memberCount >= 2 ? groupFee(memberCount) : 0;
+  const totalFee = feePerPerson * memberCount;
+  const toggleMember = (d) => setSelectedMembers(prev=>prev.find(m=>m.id===d.id)?prev.filter(m=>m.id!==d.id):[...prev,d]);
+
+  const save = async () => {
+    setLoading(true);
+    try {
+      const updates = { group_name:form.group_name, genre:form.genre, song_title:form.song_title, age_group:form.age_group, group_type:gType, member_count:memberCount, fee_per_person:feePerPerson, total_fee:totalFee };
+      if (form.file) {
+        const path = `${group.studio_code}/groups/${form.group_name.replace(/\s/g,"_")}_${Date.now()}_${form.file.name}`;
+        await supabase.storage.from("mp3s").upload(path, form.file, {upsert:true});
+        updates.file_name = form.file.name; updates.file_path = path;
+      }
+      const {error:gue2} = await supabase.from("group_entries").update(updates).eq("id",group.id); if(gue2) throw gue2;
+      // update members: delete old, insert new
+      for (const m of groupMembers) { await supabase.from("group_members").delete().eq("id",m.id); }
+      for (const d of selectedMembers) {
+        await supabase.from("group_members").insert({ group_entry_id:group.id, dancer_id:d.id, dancer_name:`${d.first_name} ${d.last_name}`, membership_code:d.membership_code });
+      }
+      onSave();
+    } catch(e) { notify(e.message,"#c0392b"); }
+    setLoading(false);
+  };
+
+  return (
+    <Modal title="Edit Group Entry" onClose={onClose} color="#F27C20">
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <div><label style={S.label}>Group Name</label><input style={S.input} value={form.group_name} onChange={e=>set("group_name",e.target.value)} /></div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+          <div><label style={S.label}>Genre</label><select style={S.select} value={form.genre} onChange={e=>set("genre",e.target.value)}>{GENRES.map(g=><option key={g}>{g}</option>)}</select></div>
+          <div><label style={S.label}>Age Group</label><select style={S.select} value={form.age_group} onChange={e=>set("age_group",e.target.value)}>{AGE_GROUPS.map(ag=><option key={ag} value={ag}>{ag}</option>)}</select></div>
+        </div>
+        <div><label style={S.label}>Song Title</label><input style={S.input} value={form.song_title} onChange={e=>set("song_title",e.target.value)} /></div>
+        <div>
+          <label style={S.label}>Members</label>
+          <div style={{maxHeight:180,overflowY:"auto",display:"flex",flexDirection:"column",gap:6}}>
+            {dancers.map(d=>{
+              const sel=!!selectedMembers.find(m=>m.id===d.id);
+              return <div key={d.id} onClick={()=>toggleMember(d)} style={{padding:"9px 14px",borderRadius:8,border:`1px solid ${sel?"#F27C20":"#2e2e2e"}`,background:sel?"#F27C2018":"#1c1c1c",cursor:"pointer",display:"flex",justifyContent:"space-between"}}>
+                <span>{d.first_name} {d.last_name}</span>{sel&&<span style={{color:"#F27C20"}}>✓</span>}
+              </div>;
+            })}
+          </div>
+        </div>
+        {memberCount>=2&&<div style={{padding:"8px 12px",background:"#F27C2018",borderRadius:8,fontSize:13,color:"#F27C20"}}>{memberCount} dancers · {gType} · R{feePerPerson}pp · Total: R{totalFee}</div>}
+        <div>
+          <label style={S.label}>Replace Music (optional)</label>
+          <div onClick={()=>document.getElementById("editGroupFile").click()} style={{border:"2px dashed #2e2e2e",borderRadius:10,padding:16,textAlign:"center",cursor:"pointer",background:"#1c1c1c"}}>
+            <input id="editGroupFile" type="file" accept=".mp3,.wav,.m4a,audio/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f){set("file",f);set("fileName",f.name);}}} />
+            {form.fileName?<div style={{color:"#F27C20"}}>🎵 {form.fileName}</div>:<div style={{color:"#ffffff",fontSize:12}}>Current: {group.file_name} · Click to replace</div>}
+          </div>
+        </div>
+        <button style={S.btn("#F27C20")} onClick={save} disabled={loading}>{loading?<Spinner color="#fff"/>:"Save Changes"}</button>
+      </div>
+    </Modal>
+  );
+}
+
+// ── GROUP MEMBERS VIEWER ──
+function GroupMembersModal({ group, members, onClose }) {
+  return (
+    <Modal title={`${group.group_name} — Members`} onClose={onClose} color="#F27C20">
+      <div style={{display:"flex",flexDirection:"column",gap:8}}>
+        <div style={{padding:"8px 12px",background:"#F27C2018",borderRadius:8,fontSize:13,color:"#F27C20",marginBottom:4}}>
+          {group.group_type} · {group.genre} · {group.member_count} dancers
+        </div>
+        {members.map((m,i)=>(
+          <div key={m.id} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",background:"#1c1c1c",borderRadius:8,border:"1px solid #242424"}}>
+            <div style={{width:28,height:28,borderRadius:"50%",background:"#c4713a22",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:"#F27C20",fontWeight:"bold"}}>{i+1}</div>
+            <div>
+              <div style={{fontWeight:"bold"}}>{m.dancer_name}</div>
+              <div style={{fontSize:11,color:"#ffffff"}}>{m.membership_code}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </Modal>
+  );
+}
+
+// ── MODAL WRAPPER ──
+function Modal({ title, onClose, color, children }) {
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.88)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,padding:16,overflowY:"auto"}}>
+      <div style={{...S.card,width:"100%",maxWidth:520,maxHeight:"90vh",overflowY:"auto"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+          <div style={{fontSize:18,color}}>{title}</div>
+          <button onClick={onClose} style={{background:"none",border:"none",color:"#ffffff",fontSize:20,cursor:"pointer"}}>✕</button>
+        </div>
+        {children}
       </div>
     </div>
   );
