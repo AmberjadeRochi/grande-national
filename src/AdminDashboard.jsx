@@ -3,7 +3,7 @@ import { supabase, S, Spinner, AudioBars, GENRES, PRICING, C } from "./App.jsx";
 import * as XLSX from "xlsx";
 import JSZip from "jszip";
 
-const ADMIN_PASSWORD = "ROOS"; // Change this to your password
+const ADMIN_PASSWORD = "ROSEROCK@2532str!"; // Change this to your password
 
 // EmailJS config
 const EMAILJS_SERVICE_ID = "service_pu3z5w7";
