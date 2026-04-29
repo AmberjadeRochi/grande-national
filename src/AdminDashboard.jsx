@@ -3,7 +3,7 @@ import { supabase, S, Spinner, AudioBars, GENRES, PRICING, C } from "./App.jsx";
 import * as XLSX from "xlsx";
 import JSZip from "jszip";
 
-const ADMIN_PASSWORD = "ROOS"; // Change this to your password
+const ADMIN_PASSWORD = "GrandeNational2025!"; // Change this to your password
 
 export default function AdminDashboard({ onBack, notify }) {
   const [authed, setAuthed] = useState(false);
@@ -70,102 +70,195 @@ export default function AdminDashboard({ onBack, notify }) {
   const buildMasterExcel = () => {
     const wb = XLSX.utils.book_new();
 
-    // Sheet 1: All Dancers
-    const dancerRows = dancers.map(d => {
-      const dSolos = solos.filter(s=>s.dancer_id===d.id);
-      const dGroups = groupMembers.filter(m=>m.dancer_id===d.id);
+    // ── Sheet 1: FULL DANCER DETAIL — one row per dancer with ALL solos and groups expanded ──
+    const dancerRows = [];
+    dancers.forEach(d => {
+      const dSolos = solos.filter(s => s.dancer_id === d.id);
+      const dGroupIds = groupMembers.filter(m => m.dancer_id === d.id).map(m => m.group_entry_id);
+      const dGroups = groups.filter(g => dGroupIds.includes(g.id));
       const soloFee = dSolos.length * PRICING.solo;
-      const groupFee = groups.filter(g=>dGroups.some(m=>m.group_entry_id===g.id)).reduce((a,g)=>a+g.fee_per_person,0);
-      return {
-        "Membership Code": d.membership_code,
+      const groupFee = dGroups.reduce((a,g) => a + g.fee_per_person, 0);
+      const total = d.registration_fee + soloFee + groupFee;
+
+      // Build solo columns — one per genre
+      const soloDetail = {};
+      GENRES.forEach(genre => {
+        const s = dSolos.find(s => s.genre === genre);
+        soloDetail[`Solo: ${genre}`] = s ? s.song_title : "";
+      });
+
+      // Build group detail
+      const groupDetail = dGroups.map(g =>
+        `${g.group_name} (${g.group_type}, ${g.genre}, "${g.song_title}")`
+      ).join(" | ");
+
+      dancerRows.push({
         "First Name": d.first_name,
         "Last Name": d.last_name,
+        "Studio": d.studio_name,
         "Date of Birth": d.date_of_birth,
         "Age": d.age,
         "Age Group": d.age_group,
         "Gender": d.gender,
-        "Studio": d.studio_name,
-        "Solo Entries": dSolos.length,
-        "Solo Genres": dSolos.map(s=>s.genre).join(", "),
-        "Group Entries": dGroups.length,
+        "Membership Code": d.membership_code,
+        "No. of Solos": dSolos.length,
+        ...soloDetail,
+        "No. of Group Entries": dGroups.length,
+        "Group Entries Detail": groupDetail,
         "Reg Fee": `R${d.registration_fee}`,
         "Solo Fees": `R${soloFee}`,
-        "Group Fees (approx)": `R${groupFee}`,
-        "Dancer Total": `R${d.registration_fee + soloFee + groupFee}`,
-      };
+        "Group Fees": `R${groupFee}`,
+        "DANCER TOTAL": `R${total}`,
+      });
     });
     const ws1 = XLSX.utils.json_to_sheet(dancerRows);
-    ws1["!cols"] = [{wch:20},{wch:14},{wch:14},{wch:14},{wch:6},{wch:20},{wch:8},{wch:22},{wch:10},{wch:30},{wch:12},{wch:10},{wch:10},{wch:14},{wch:12}];
-    XLSX.utils.book_append_sheet(wb, ws1, "All Dancers");
+    ws1["!cols"] = [
+      {wch:14},{wch:14},{wch:22},{wch:14},{wch:5},{wch:16},{wch:8},{wch:20},
+      {wch:10},
+      ...GENRES.map(()=>({wch:28})),
+      {wch:16},{wch:60},
+      {wch:10},{wch:10},{wch:10},{wch:14}
+    ];
+    XLSX.utils.book_append_sheet(wb, ws1, "All Dancers (Full Detail)");
 
-    // Sheet 2: Solo Entries
-    const soloRows = solos.map(s => ({
-      "Dancer Name": s.dancer_name,
-      "Membership Code": s.membership_code,
-      "Studio": s.studio_name,
-      "Genre": s.genre,
-      "Song Title": s.song_title,
-      "Age Group": s.age_group,
-      "Fee": `R${s.fee}`,
-      "Music File": s.file_name,
-    }));
-    const ws2 = XLSX.utils.json_to_sheet(soloRows);
-    ws2["!cols"] = [{wch:22},{wch:20},{wch:22},{wch:14},{wch:28},{wch:22},{wch:8},{wch:30}];
-    XLSX.utils.book_append_sheet(wb, ws2, "Solo Entries");
-
-    // Sheet 3: Group & Duo Entries
-    const groupRows = groups.map(g => ({
-      "Group Name": g.group_name,
-      "Type": g.group_type,
-      "Studio": g.studio_name,
-      "Genre": g.genre,
-      "Song Title": g.song_title,
-      "Age Group": g.age_group,
-      "No. of Dancers": g.member_count,
-      "Fee Per Person": `R${g.fee_per_person}`,
-      "Total Fee": `R${g.total_fee}`,
-      "Member Names": groupMembers.filter(m=>m.group_entry_id===g.id).map(m=>m.dancer_name).join(", "),
-      "Music File": g.file_name,
-    }));
-    const ws3 = XLSX.utils.json_to_sheet(groupRows);
-    ws3["!cols"] = [{wch:22},{wch:12},{wch:22},{wch:14},{wch:28},{wch:22},{wch:12},{wch:12},{wch:10},{wch:50},{wch:30}];
-    XLSX.utils.book_append_sheet(wb, ws3, "Groups & Duos");
-
-    // Sheet 4: Running Order by Genre
-    const runRows = [];
+    // ── Sheet 2: ALL SOLOS ──
+    const soloRows = [];
+    // Group by genre for easy reading
     GENRES.forEach(genre => {
-      const gs = solos.filter(s=>s.genre===genre);
-      const gg = groups.filter(g=>g.genre===genre);
+      const genreSolos = solos.filter(s => s.genre === genre);
+      if (!genreSolos.length) return;
+      soloRows.push({"Genre": `=== ${genre.toUpperCase()} ===`, "Dancer Name":"", "Studio":"", "Song Title":"", "Age Group":"", "Membership Code":"", "Fee":"", "Music File":""});
+      genreSolos.forEach((s,i) => soloRows.push({
+        "Genre": genre,
+        "Dancer Name": s.dancer_name,
+        "Studio": s.studio_name,
+        "Song Title": s.song_title,
+        "Age Group": s.age_group,
+        "Membership Code": s.membership_code,
+        "Fee": `R${s.fee}`,
+        "Music File": s.file_name,
+      }));
+      soloRows.push({"Genre":"","Dancer Name":"","Studio":"","Song Title":"","Age Group":"","Membership Code":"","Fee":"","Music File":""});
+    });
+    const ws2 = XLSX.utils.json_to_sheet(soloRows);
+    ws2["!cols"] = [{wch:16},{wch:24},{wch:22},{wch:30},{wch:22},{wch:20},{wch:8},{wch:36}];
+    XLSX.utils.book_append_sheet(wb, ws2, "All Solos by Genre");
+
+    // ── Sheet 3: ALL GROUPS & DUOS ──
+    const groupRows = [];
+    GENRES.forEach(genre => {
+      const genreGroups = groups.filter(g => g.genre === genre);
+      if (!genreGroups.length) return;
+      groupRows.push({"Genre":`=== ${genre.toUpperCase()} ===`,"Group Name":"","Type":"","Studio":"","Song Title":"","Age Group":"","No. Dancers":"","Fee pp":"","Total Fee":"","All Members":"","Music File":""});
+      genreGroups.forEach(g => {
+        const members = groupMembers.filter(m => m.group_entry_id === g.id).map(m => m.dancer_name).join(", ");
+        groupRows.push({
+          "Genre": genre,
+          "Group Name": g.group_name,
+          "Type": g.group_type,
+          "Studio": g.studio_name,
+          "Song Title": g.song_title,
+          "Age Group": g.age_group,
+          "No. Dancers": g.member_count,
+          "Fee pp": `R${g.fee_per_person}`,
+          "Total Fee": `R${g.total_fee}`,
+          "All Members": members,
+          "Music File": g.file_name,
+        });
+      });
+      groupRows.push({"Genre":"","Group Name":"","Type":"","Studio":"","Song Title":"","Age Group":"","No. Dancers":"","Fee pp":"","Total Fee":"","All Members":"","Music File":""});
+    });
+    const ws3 = XLSX.utils.json_to_sheet(groupRows);
+    ws3["!cols"] = [{wch:16},{wch:24},{wch:12},{wch:22},{wch:30},{wch:22},{wch:10},{wch:8},{wch:10},{wch:60},{wch:36}];
+    XLSX.utils.book_append_sheet(wb, ws3, "All Groups & Duos by Genre");
+
+    // ── Sheet 4: RUNNING ORDER ──
+    const runRows = [];
+    let entryNum = 1;
+    GENRES.forEach(genre => {
+      const gs = solos.filter(s => s.genre === genre);
+      const gg = groups.filter(g => g.genre === genre);
       if (!gs.length && !gg.length) return;
-      runRows.push({"#":"", "Type":`=== ${genre.toUpperCase()} ===`, "Performer":"", "Studio":"", "Song Title":"", "Age Group":"", "Music File":""});
-      gs.forEach((s,i) => runRows.push({"#":i+1, "Type":"Solo", "Performer":s.dancer_name, "Studio":s.studio_name, "Song Title":s.song_title, "Age Group":s.age_group, "Music File":s.file_name}));
-      gg.forEach((g,i) => runRows.push({"#":gs.length+i+1, "Type":g.group_type, "Performer":g.group_name, "Studio":g.studio_name, "Song Title":g.song_title, "Age Group":g.age_group, "Music File":g.file_name}));
-      runRows.push({"#":"", "Type":"", "Performer":"", "Studio":"", "Song Title":"", "Age Group":"", "Music File":""});
+      runRows.push({"#":"", "Genre":`=== ${genre.toUpperCase()} ===`, "Type":"", "Performer":"", "Studio":"", "Song Title":"", "Age Group":"", "Music File":""});
+      gs.forEach(s => { runRows.push({"#":entryNum++,"Genre":genre,"Type":"Solo","Performer":s.dancer_name,"Studio":s.studio_name,"Song Title":s.song_title,"Age Group":s.age_group,"Music File":s.file_name}); });
+      gg.forEach(g => { runRows.push({"#":entryNum++,"Genre":genre,"Type":g.group_type,"Performer":g.group_name,"Studio":g.studio_name,"Song Title":g.song_title,"Age Group":g.age_group,"Music File":g.file_name}); });
+      runRows.push({"#":"","Genre":"","Type":"","Performer":"","Studio":"","Song Title":"","Age Group":"","Music File":""});
     });
     const ws4 = XLSX.utils.json_to_sheet(runRows);
-    ws4["!cols"] = [{wch:4},{wch:12},{wch:24},{wch:22},{wch:28},{wch:22},{wch:30}];
+    ws4["!cols"] = [{wch:4},{wch:14},{wch:12},{wch:26},{wch:22},{wch:30},{wch:22},{wch:36}];
     XLSX.utils.book_append_sheet(wb, ws4, "Running Order");
 
-    // Sheet 5: Financial Summary
+    // ── Sheet 5: FINANCIAL SUMMARY ──
     const totalReg = dancers.length * PRICING.registration;
     const totalSol = solos.length * PRICING.solo;
-    const totalGrp = groups.reduce((a,g)=>a+g.total_fee,0);
+    const totalGrp = groups.reduce((a,g) => a+g.total_fee, 0);
     const finRows = [
-      {"Studio":"GRAND TOTAL","Dancers":dancers.length,"Reg Fees":`R${totalReg}`,"Solo Entries":solos.length,"Solo Fees":`R${totalSol}`,"Group Entries":groups.length,"Group Fees":`R${totalGrp}`,"TOTAL":`R${totalReg+totalSol+totalGrp}`},
-      {"Studio":"","Dancers":"","Reg Fees":"","Solo Entries":"","Solo Fees":"","Group Entries":"","Group Fees":"","TOTAL":""},
+      {"Studio":"GRAND TOTAL","Dancers":dancers.length,"Reg Fees":`R${totalReg}`,"Solo Entries":solos.length,"Solo Fees":`R${totalSol}`,"Group Entries":groups.length,"Group Fees":`R${totalGrp}`,"ESTIMATED TOTAL":`R${totalReg+totalSol+totalGrp}`},
+      {"Studio":"","Dancers":"","Reg Fees":"","Solo Entries":"","Solo Fees":"","Group Entries":"","Group Fees":"","ESTIMATED TOTAL":""},
     ];
-    studios.filter(s=>s.status==="approved").forEach(studio => {
+    studios.filter(s => s.status==="approved").forEach(studio => {
       const sd=dancers.filter(d=>d.studio_code===studio.studio_code);
       const ss=solos.filter(s=>s.studio_code===studio.studio_code);
       const sg=groups.filter(g=>g.studio_code===studio.studio_code);
       const reg=sd.length*PRICING.registration, sol=ss.length*PRICING.solo, grp=sg.reduce((a,g)=>a+g.total_fee,0);
-      finRows.push({"Studio":studio.studio_name,"Dancers":sd.length,"Reg Fees":`R${reg}`,"Solo Entries":ss.length,"Solo Fees":`R${sol}`,"Group Entries":sg.length,"Group Fees":`R${grp}`,"TOTAL":`R${reg+sol+grp}`});
+      finRows.push({"Studio":studio.studio_name,"Dancers":sd.length,"Reg Fees":`R${reg}`,"Solo Entries":ss.length,"Solo Fees":`R${sol}`,"Group Entries":sg.length,"Group Fees":`R${grp}`,"ESTIMATED TOTAL":`R${reg+sol+grp}`});
     });
+    finRows.push({"Studio":"","Dancers":"","Reg Fees":"","Solo Entries":"","Solo Fees":"","Group Entries":"","Group Fees":"","ESTIMATED TOTAL":""});
+    finRows.push({"Studio":"NOTE: All amounts are estimates. Please issue final invoices before requesting payment.","Dancers":"","Reg Fees":"","Solo Entries":"","Solo Fees":"","Group Entries":"","Group Fees":"","ESTIMATED TOTAL":""});
     const ws5 = XLSX.utils.json_to_sheet(finRows);
-    ws5["!cols"] = [{wch:24},{wch:8},{wch:10},{wch:12},{wch:10},{wch:14},{wch:12},{wch:12}];
+    ws5["!cols"] = [{wch:28},{wch:8},{wch:12},{wch:12},{wch:12},{wch:14},{wch:12},{wch:16}];
     XLSX.utils.book_append_sheet(wb, ws5, "Financial Summary");
 
     return wb;
+  };
+
+  const exportAllSolos = () => {
+    if (!solos.length) { notify("No solo entries yet","#c0392b"); return; }
+    const wb = XLSX.utils.book_new();
+    GENRES.forEach(genre => {
+      const items = solos.filter(s => s.genre === genre);
+      if (!items.length) return;
+      const rows = items.map(s => ({
+        "Dancer Name": s.dancer_name,
+        "Membership Code": s.membership_code,
+        "Studio": s.studio_name,
+        "Song Title": s.song_title,
+        "Age Group": s.age_group,
+        "Fee": `R${s.fee}`,
+        "Music File": s.file_name,
+      }));
+      const ws = XLSX.utils.json_to_sheet(rows);
+      ws["!cols"] = [{wch:24},{wch:20},{wch:22},{wch:30},{wch:22},{wch:8},{wch:36}];
+      XLSX.utils.book_append_sheet(wb, ws, genre.slice(0,31));
+    });
+    XLSX.writeFile(wb, "GrandeNational_AllSolos.xlsx");
+    notify("✓ All solos exported — one sheet per genre!");
+  };
+
+  const exportAllGroups = () => {
+    if (!groups.length) { notify("No group entries yet","#c0392b"); return; }
+    const wb = XLSX.utils.book_new();
+    GENRES.forEach(genre => {
+      const items = groups.filter(g => g.genre === genre);
+      if (!items.length) return;
+      const rows = items.map(g => ({
+        "Group Name": g.group_name,
+        "Type": g.group_type,
+        "Studio": g.studio_name,
+        "Song Title": g.song_title,
+        "Age Group": g.age_group,
+        "No. Dancers": g.member_count,
+        "Fee Per Person": `R${g.fee_per_person}`,
+        "Total Fee": `R${g.total_fee}`,
+        "All Members": groupMembers.filter(m=>m.group_entry_id===g.id).map(m=>m.dancer_name).join(", "),
+        "Music File": g.file_name,
+      }));
+      const ws = XLSX.utils.json_to_sheet(rows);
+      ws["!cols"] = [{wch:24},{wch:12},{wch:22},{wch:30},{wch:22},{wch:10},{wch:12},{wch:10},{wch:60},{wch:36}];
+      XLSX.utils.book_append_sheet(wb, ws, genre.slice(0,31));
+    });
+    XLSX.writeFile(wb, "GrandeNational_AllGroups.xlsx");
+    notify("✓ All groups exported — one sheet per genre!");
   };
 
   const exportMaster = () => {
@@ -364,12 +457,16 @@ export default function AdminDashboard({ onBack, notify }) {
           ))}
         </div>
 
-        <div style={{ display:"flex", gap:10, marginBottom:24, flexWrap:"wrap", alignItems:"center" }}>
+        <div style={{ display:"flex", gap:10, marginBottom:16, flexWrap:"wrap", alignItems:"center" }}>
           <button onClick={downloadAllAsZip} disabled={!!zipProgress} style={{ ...S.btn("#F27C20"), fontSize:14, padding:"14px 28px" }}>
             {zipProgress ? <><Spinner color="#fff" /> {zipProgress}</> : "⬇ Download Everything (ZIP + Music + Spreadsheet)"}
           </button>
-          <button onClick={exportMaster} style={S.ghost("#F27C20")}>⬇ Spreadsheet Only</button>
+        </div>
+        <div style={{ display:"flex", gap:10, marginBottom:24, flexWrap:"wrap" }}>
+          <button onClick={exportMaster} style={S.ghost("#F27C20")}>⬇ Full Spreadsheet</button>
           <button onClick={exportRunningOrder} style={S.ghost("#F27C20")}>⬇ Running Order</button>
+          <button onClick={exportAllSolos} style={S.ghost("#F27C20")}>⬇ All Solos</button>
+          <button onClick={exportAllGroups} style={S.ghost("#F27C20")}>⬇ All Groups & Duos</button>
         </div>
         {zipProgress && (
           <div style={{ marginBottom:16, padding:"12px 16px", background:"#F27C2015", border:"1px solid #F27C2044", borderRadius:6, fontSize:13, color:"#F27C20", fontFamily:"'Montserrat',sans-serif" }}>
