@@ -41,7 +41,16 @@ export default function StudioRegister({ onBack, onSuccess, notify }) {
     studio_owner_email:"", studio_owner_contact_nr:"",
     password:"", confirm_password:""
   });
-  const set = (k,v) => setForm(p=>({...p,[k]:v}));
+  const set = (k,v) => { setForm(p=>({...p,[k]:v})); setError(''); };
+
+  useEffect(() => {
+    supabase.from("app_settings")
+      .select("value")
+      .eq("key", "submissions_locked")
+      .single()
+      .then(({ data }) => { if (data?.value === "true") setLocked(true); })
+      .catch(() => {});
+  }, []);
 
   const handleNameChange = (val) => {
     set("studio_name", val);
@@ -49,13 +58,14 @@ export default function StudioRegister({ onBack, onSuccess, notify }) {
   };
 
   const submit = async () => {
-    if (!form.studio_name||!form.studio_email||!form.password) { notify("Please fill in all required fields","#c0392b"); return; }
-    if (form.password !== form.confirm_password) { notify("Passwords do not match","#c0392b"); return; }
-    if (form.password.length < 6) { notify("Password must be at least 6 characters","#c0392b"); return; }
     if (locked) {
       setError("Studio registrations are currently closed. Please contact the competition organiser.");
       return;
     }
+    if (!form.studio_name||!form.studio_email||!form.password) { setError("Please fill in all required fields."); return; }
+    if (form.password !== form.confirm_password) { setError("Passwords do not match. Please try again."); return; }
+    if (form.password.length < 8) { setError("Password must be at least 8 characters and include a number or special character."); return; }
+    if (!/[0-9!@#$%^&*]/.test(form.password)) { setError("Password must include at least one number or special character (e.g. ! @ # $ %)."); return; }
     setLoading(true);
     try {
       const { error } = await supabase.from("studios").insert({
