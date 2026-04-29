@@ -92,15 +92,15 @@ export const C = {
 
 export const S = {
   app: { minHeight:"100vh", background:C.bg, fontFamily:"'Cormorant Garamond', Georgia, serif", color:C.text },
-  card: { background:C.surface, border:`1px solid ${C.border}`, borderRadius:6, padding:28 },
-  input: { width:"100%", background:"#0a0a0a", border:`1px solid #2a2a2a`, borderRadius:6, padding:"11px 14px", color:C.text, fontFamily:"'Montserrat', sans-serif", fontSize:14, outline:"none", boxSizing:"border-box" },
-  select: { width:"100%", background:"#0a0a0a", border:`1px solid #2a2a2a`, borderRadius:6, padding:"11px 14px", color:C.text, fontFamily:"'Montserrat', sans-serif", fontSize:14, outline:"none", boxSizing:"border-box" },
+  card: { background:C.surface, border:`1px solid ${C.border}`, borderRadius:6, padding:28, color:"#ffffff" },
+  input: { width:"100%", background:"#0a0a0a", border:`1px solid #2a2a2a`, borderRadius:6, padding:"13px 16px", color:"#ffffff", fontFamily:"'Montserrat', sans-serif", fontSize:15, outline:"none", boxSizing:"border-box" },
+  select: { width:"100%", background:"#0a0a0a", border:`1px solid #2a2a2a`, borderRadius:6, padding:"13px 16px", color:"#ffffff", fontFamily:"'Montserrat', sans-serif", fontSize:15, outline:"none", boxSizing:"border-box" },
   btn: (color="#F27C20") => ({ background:color, color:"#ffffff", border:"none", borderRadius:6, padding:"12px 32px", fontFamily:"'Montserrat', sans-serif", fontSize:13, fontWeight:"500", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8, letterSpacing:"0.06em" }),
   ghost: (color="#F27C20") => ({ background:"transparent", color, border:`1px solid ${color}`, borderRadius:6, padding:"10px 22px", fontFamily:"'Montserrat', sans-serif", fontSize:13, cursor:"pointer" }),
-  label: { display:"block", fontSize:11, letterSpacing:"0.12em", textTransform:"uppercase", color:C.muted, marginBottom:7, fontFamily:"'Montserrat', sans-serif" },
+  label: { display:"block", fontSize:11, letterSpacing:"0.12em", textTransform:"uppercase", color:"#ffffff", marginBottom:7, fontFamily:"'Montserrat', sans-serif" },
   tag: (c) => ({ background:`${c}20`, color:c, borderRadius:4, padding:"3px 11px", fontSize:11, fontWeight:"500", whiteSpace:"nowrap", display:"inline-block", fontFamily:"'Montserrat', sans-serif" }),
-  back: { background:"transparent", color:C.muted, border:`1px solid #2a2a2a`, borderRadius:6, padding:"8px 18px", fontFamily:"'Montserrat', sans-serif", fontSize:12, cursor:"pointer", marginBottom:28 },
-  disclaimer: { marginTop:24, padding:"12px 16px", background:"#0a0600", border:`1px solid #F27C2044`, borderRadius:6, fontSize:12, color:"#F27C20", lineHeight:1.7, fontFamily:"'Montserrat', sans-serif" },
+  back: { background:"transparent", color:"#ffffff", border:`1px solid #2a2a2a`, borderRadius:6, padding:"8px 18px", fontFamily:"'Montserrat', sans-serif", fontSize:12, cursor:"pointer", marginBottom:28 },
+  disclaimer: { marginTop:24, padding:"14px 18px", background:"#0a0600", border:`1px solid #F27C2044`, borderRadius:6, fontSize:13, color:"#F27C20", lineHeight:1.7, fontFamily:"'Montserrat', sans-serif" },
 };
 
 // ─── IMPORTS ─────────────────────────────────────────────────────────────────
@@ -160,7 +160,7 @@ export default function App() {
       {/* Top bar */}
       <div style={{ background:"#111111", borderBottom:"1px solid #1e1e1e", padding:"14px 40px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
         <img src="/Dance-Narrative-Grande-National-Logo.webp" alt="Grande National" style={{ height:40, opacity:.9 }} />
-        <div style={{ fontFamily:"'Montserrat', sans-serif", fontSize:10, letterSpacing:"0.2em", color:C.muted, textTransform:"uppercase" }}>Competition Management Portal</div>
+        <div style={{ fontFamily:"'Montserrat', sans-serif", fontSize:10, letterSpacing:"0.2em", color:"#ffffff", textTransform:"uppercase" }}>Competition Management Portal</div>
       </div>
 
       <div style={{ maxWidth:900, margin:"0 auto", padding:"80px 24px 56px" }}>
@@ -170,7 +170,7 @@ export default function App() {
           <h1 style={{ fontSize:"clamp(48px,9vw,88px)", fontWeight:300, margin:0, lineHeight:.95, letterSpacing:"0.05em", textTransform:"uppercase", fontFamily:"'Cormorant Garamond', serif" }}>
             Grande<br /><span style={{ color:C.accent, fontStyle:"italic" }}>National</span>
           </h1>
-          <p style={{ color:C.muted, marginTop:20, fontSize:11, letterSpacing:"0.25em", textTransform:"uppercase", fontFamily:"'Montserrat', sans-serif" }}>Competition Registration Portal</p>
+          <p style={{ color:"#ffffff", marginTop:20, fontSize:11, letterSpacing:"0.25em", textTransform:"uppercase", fontFamily:"'Montserrat', sans-serif" }}>Competition Registration Portal</p>
         </div>
 
         <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))", gap:16, marginBottom:40 }}>
@@ -189,13 +189,13 @@ export default function App() {
               onMouseLeave={e => { e.currentTarget.style.borderColor="#242424"; e.currentTarget.style.transform="translateY(0)"; }}>
               <div style={{ fontSize:28, marginBottom:16, color:C.accent, fontFamily:"'Montserrat', sans-serif", fontWeight:300 }}>{p.icon}</div>
               <div style={{ fontSize:18, color:p.color, marginBottom:8 }}>{p.title}</div>
-              <div style={{ fontSize:13, color:"#555", lineHeight:1.7 }}>{p.sub}</div>
+              <div style={{ fontSize:14, color:"#cccccc", lineHeight:1.8, fontSize:14 }}>{p.sub}</div>
               <div style={{ marginTop:20, fontSize:12, color:"#F27C20", letterSpacing:"0.1em", fontFamily:"'Montserrat', sans-serif" }}>Enter →</div>
             </button>
           ))}
         </div>
         <div style={{ textAlign:"center", marginTop:16 }}>
-          <button onClick={()=>setPortal("admin")} style={{ background:"none", border:"none", color:"#333", fontSize:12, cursor:"pointer", fontFamily:"Georgia,serif", letterSpacing:"0.1em" }}>Admin Access</button>
+          <button onClick={()=>setPortal("admin")} style={{ background:"none", border:"none", color:"#ffffff", fontSize:12, cursor:"pointer", fontFamily:"Georgia,serif", letterSpacing:"0.1em" }}>Admin Access</button>
         </div>
         <div style={S.disclaimer}>⚠️ <strong>Please wait for your final invoice before making payment.</strong> All fees displayed are estimates only.</div>
       </div>
@@ -238,10 +238,10 @@ function LoginModal({ onClose, onLogin, notify }) {
       <div style={{ ...S.card, width:"100%", maxWidth:420 }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:24 }}>
           <div style={{ fontSize:18, color:"#F27C20" }}>{forgot?"Reset Password":"Studio Login"}</div>
-          <button onClick={onClose} style={{ background:"none", border:"none", color:"#555", fontSize:20, cursor:"pointer" }}>✕</button>
+          <button onClick={onClose} style={{ background:"none", border:"none", color:"#ffffff", fontSize:20, cursor:"pointer" }}>✕</button>
         </div>
         {resetSent ? (
-          <div style={{ textAlign:"center", color:"#888", fontSize:14, lineHeight:1.7 }}>
+          <div style={{ textAlign:"center", color:"#cccccc", fontSize:14, lineHeight:1.7 }}>
             Please contact the competition admin to reset your password.<br/>
             <button onClick={()=>{setForgot(false);setResetSent(false);}} style={{ ...S.ghost("#F27C20"), marginTop:16 }}>← Back to Login</button>
           </div>
@@ -256,7 +256,7 @@ function LoginModal({ onClose, onLogin, notify }) {
                 <label style={S.label}>Password</label>
                 <div style={{position:"relative"}}>
                   <input style={{...S.input, paddingRight:44}} type={showPw?"text":"password"} value={password} onChange={e=>{setPassword(e.target.value);setPwError("");}} onKeyDown={e=>e.key==="Enter"&&handleLogin()} placeholder="••••••••" />
-                  <button onClick={()=>setShowPw(p=>!p)} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:"#666",cursor:"pointer",fontSize:16,padding:0}}>
+                  <button onClick={()=>setShowPw(p=>!p)} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:"#ffffff",cursor:"pointer",fontSize:16,padding:0}}>
                     {showPw?"🙈":"👁️"}
                   </button>
                 </div>
@@ -266,7 +266,7 @@ function LoginModal({ onClose, onLogin, notify }) {
             <button style={S.btn("#F27C20")} onClick={forgot?()=>setResetSent(true):handleLogin} disabled={loading}>
               {loading?<Spinner color="#0a0a0a"/>:forgot?"Send Reset Request":"Login →"}
             </button>
-            <button onClick={()=>setForgot(!forgot)} style={{ background:"none", border:"none", color:"#555", fontSize:13, cursor:"pointer", fontFamily:"Georgia,serif" }}>
+            <button onClick={()=>setForgot(!forgot)} style={{ background:"none", border:"none", color:"#ffffff", fontSize:13, cursor:"pointer", fontFamily:"Georgia,serif" }}>
               {forgot?"← Back to login":"Forgot password?"}
             </button>
           </div>
