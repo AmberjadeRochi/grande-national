@@ -47,7 +47,7 @@ export function groupFee(count) {
 }
 
 // ─── SHARED UI ───────────────────────────────────────────────────────────────
-export function Spinner({ color = "#8a7a4a", size = 18 }) {
+export function Spinner({ color = "#F27C20", size = 18 }) {
   return (
     <>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
@@ -68,7 +68,7 @@ export function AudioBars({ playing }) {
       <style>{`@keyframes bar{to{height:3px}}`}</style>
       <span style={{ display:"inline-flex", alignItems:"flex-end", gap:2, height:14, marginLeft:6 }}>
         {[10,16,8,14].map((h,i)=>(
-          <span key={i} style={{ display:"block", width:3, borderRadius:2, background:"#8a7a4a", height:playing?`${h}px`:"3px", animation:playing?`bar .6s ease-in-out ${i*.12}s infinite alternate`:"none", transition:"height .3s" }} />
+          <span key={i} style={{ display:"block", width:3, borderRadius:2, background:"#F27C20", height:playing?`${h}px`:"3px", animation:playing?`bar .6s ease-in-out ${i*.12}s infinite alternate`:"none", transition:"height .3s" }} />
         ))}
       </span>
     </>
@@ -82,28 +82,25 @@ document.head.appendChild(fontLink);
 
 // ─── BRAND COLOURS ───────────────────────────────────────────────────────────
 export const C = {
-  bg:       "#080806",
-  surface:  "#111110",
-  border:   "#2a2820",
-  accent:   "#c4713a",   // burnt orange
-  rose:     "#b05060",   // dusty rose
-  gold:     "#8a7a4a",   // olive gold
-  text:     "#f0ebe0",
-  muted:    "#6a6456",
-  charcoal: "#3a3830",
+  bg:      "#000000",
+  surface: "#0f0f0f",
+  border:  "#1e1e1e",
+  accent:  "#F27C20",
+  text:    "#ffffff",
+  muted:   "#888888",
 };
 
 export const S = {
   app: { minHeight:"100vh", background:C.bg, fontFamily:"'Cormorant Garamond', Georgia, serif", color:C.text },
-  card: { background:C.surface, border:`1px solid ${C.border}`, borderRadius:4, padding:28 },
-  input: { width:"100%", background:"#0f0f0d", border:`1px solid ${C.border}`, borderRadius:4, padding:"11px 14px", color:C.text, fontFamily:"'Montserrat', sans-serif", fontSize:14, outline:"none", boxSizing:"border-box", letterSpacing:"0.03em" },
-  select: { width:"100%", background:"#0f0f0d", border:`1px solid ${C.border}`, borderRadius:4, padding:"11px 14px", color:C.text, fontFamily:"'Montserrat', sans-serif", fontSize:14, outline:"none", boxSizing:"border-box" },
-  btn: (color="#c4713a") => ({ background:color, color:"#fff", border:"none", borderRadius:4, padding:"12px 32px", fontFamily:"'Montserrat', sans-serif", fontSize:13, fontWeight:"500", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8, letterSpacing:"0.08em", textTransform:"uppercase" }),
-  ghost: (color="#c4713a") => ({ background:"transparent", color, border:`1px solid ${color}`, borderRadius:4, padding:"10px 22px", fontFamily:"'Montserrat', sans-serif", fontSize:13, cursor:"pointer", letterSpacing:"0.08em", textTransform:"uppercase" }),
-  label: { display:"block", fontSize:10, letterSpacing:"0.18em", textTransform:"uppercase", color:C.muted, marginBottom:8, fontFamily:"'Montserrat', sans-serif" },
-  tag: (c) => ({ background:`${c}18`, color:c, borderRadius:2, padding:"3px 11px", fontSize:11, fontWeight:"500", whiteSpace:"nowrap", display:"inline-block", fontFamily:"'Montserrat', sans-serif", letterSpacing:"0.05em" }),
-  back: { background:"transparent", color:C.muted, border:`1px solid ${C.border}`, borderRadius:4, padding:"8px 18px", fontFamily:"'Montserrat', sans-serif", fontSize:12, cursor:"pointer", marginBottom:28, letterSpacing:"0.08em", textTransform:"uppercase" },
-  disclaimer: { marginTop:24, padding:"12px 16px", background:"#110e08", border:`1px solid ${C.gold}44`, borderRadius:4, fontSize:12, color:C.gold, lineHeight:1.7, fontFamily:"'Montserrat', sans-serif" },
+  card: { background:C.surface, border:`1px solid ${C.border}`, borderRadius:6, padding:28 },
+  input: { width:"100%", background:"#0a0a0a", border:`1px solid #2a2a2a`, borderRadius:6, padding:"11px 14px", color:C.text, fontFamily:"'Montserrat', sans-serif", fontSize:14, outline:"none", boxSizing:"border-box" },
+  select: { width:"100%", background:"#0a0a0a", border:`1px solid #2a2a2a`, borderRadius:6, padding:"11px 14px", color:C.text, fontFamily:"'Montserrat', sans-serif", fontSize:14, outline:"none", boxSizing:"border-box" },
+  btn: (color="#F27C20") => ({ background:color, color:"#ffffff", border:"none", borderRadius:6, padding:"12px 32px", fontFamily:"'Montserrat', sans-serif", fontSize:13, fontWeight:"500", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8, letterSpacing:"0.06em" }),
+  ghost: (color="#F27C20") => ({ background:"transparent", color, border:`1px solid ${color}`, borderRadius:6, padding:"10px 22px", fontFamily:"'Montserrat', sans-serif", fontSize:13, cursor:"pointer" }),
+  label: { display:"block", fontSize:11, letterSpacing:"0.12em", textTransform:"uppercase", color:C.muted, marginBottom:7, fontFamily:"'Montserrat', sans-serif" },
+  tag: (c) => ({ background:`${c}20`, color:c, borderRadius:4, padding:"3px 11px", fontSize:11, fontWeight:"500", whiteSpace:"nowrap", display:"inline-block", fontFamily:"'Montserrat', sans-serif" }),
+  back: { background:"transparent", color:C.muted, border:`1px solid #2a2a2a`, borderRadius:6, padding:"8px 18px", fontFamily:"'Montserrat', sans-serif", fontSize:12, cursor:"pointer", marginBottom:28 },
+  disclaimer: { marginTop:24, padding:"12px 16px", background:"#0a0600", border:`1px solid #F27C2044`, borderRadius:6, fontSize:12, color:"#F27C20", lineHeight:1.7, fontFamily:"'Montserrat', sans-serif" },
 };
 
 // ─── IMPORTS ─────────────────────────────────────────────────────────────────
@@ -161,28 +158,25 @@ export default function App() {
   return (
     <div style={S.app}>
       {/* Top bar */}
-      <div style={{ background:C.charcoal, padding:"14px 40px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-        <div style={{ fontFamily:"'Cormorant Garamond', serif", fontSize:13, letterSpacing:"0.3em", color:C.text, textTransform:"uppercase", opacity:.8 }}>Dance Narrative</div>
-        <div style={{ fontFamily:"'Montserrat', sans-serif", fontSize:11, letterSpacing:"0.2em", color:C.muted, textTransform:"uppercase" }}>Grande National Competition Portal</div>
+      <div style={{ background:"#111111", borderBottom:"1px solid #1e1e1e", padding:"14px 40px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+        <img src="/Dance-Narrative-Grande-National-Logo.webp" alt="Grande National" style={{ height:40, opacity:.9 }} />
+        <div style={{ fontFamily:"'Montserrat', sans-serif", fontSize:10, letterSpacing:"0.2em", color:C.muted, textTransform:"uppercase" }}>Competition Management Portal</div>
       </div>
 
       <div style={{ maxWidth:900, margin:"0 auto", padding:"80px 24px 56px" }}>
         <div style={{ textAlign:"center", marginBottom:80 }}>
-          {/* DN monogram */}
-          <div style={{ width:90, height:90, borderRadius:"50%", border:`1px solid ${C.gold}66`, display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 32px", position:"relative" }}>
-            <span style={{ fontFamily:"'Cormorant Garamond', serif", fontSize:38, fontWeight:300, color:C.text, letterSpacing:"-0.05em", fontStyle:"italic" }}>GN</span>
-          </div>
-          <div style={{ fontSize:10, letterSpacing:"0.5em", color:C.gold, textTransform:"uppercase", marginBottom:20, fontFamily:"'Montserrat', sans-serif" }}>Dance Narrative Presents</div>
-          <h1 style={{ fontSize:"clamp(48px,9vw,90px)", fontWeight:300, margin:0, lineHeight:.95, letterSpacing:"0.05em", textTransform:"uppercase", fontFamily:"'Cormorant Garamond', serif" }}>
+          <img src="/Dance-Narrative-Grande-National-Logo.webp" alt="Grande National" style={{ width:160, opacity:.95, marginBottom:32 }} />
+          <div style={{ fontSize:10, letterSpacing:"0.5em", color:C.accent, textTransform:"uppercase", marginBottom:20, fontFamily:"'Montserrat', sans-serif" }}>Dance Narrative Presents</div>
+          <h1 style={{ fontSize:"clamp(48px,9vw,88px)", fontWeight:300, margin:0, lineHeight:.95, letterSpacing:"0.05em", textTransform:"uppercase", fontFamily:"'Cormorant Garamond', serif" }}>
             Grande<br /><span style={{ color:C.accent, fontStyle:"italic" }}>National</span>
           </h1>
-          <p style={{ color:C.muted, marginTop:20, fontSize:11, letterSpacing:"0.25em", textTransform:"uppercase", fontFamily:"'Montserrat', sans-serif" }}>Competition Management Portal</p>
+          <p style={{ color:C.muted, marginTop:20, fontSize:11, letterSpacing:"0.25em", textTransform:"uppercase", fontFamily:"'Montserrat', sans-serif" }}>Competition Registration Portal</p>
         </div>
 
         <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))", gap:16, marginBottom:40 }}>
           {[
-            { icon:"🏫", title:"Studio Registration", sub:"New studios — register your dance school to participate", key:"studio-register", color:"#c4713a" },
-            { icon:"🎵", title:"Studio Portal", sub:"Registered studios — manage dancers, entries & music", key:"studio-login", color:"#8a7a4a" },
+            { icon:"→", title:"Studio Registration", sub:"New studios — register your dance school to participate", key:"studio-register", color:"#F27C20" },
+            { icon:"→", title:"Studio Portal", sub:"Registered studios — manage dancers, entries & music", key:"studio-login", color:"#F27C20" },
           ].map(p => (
             <button key={p.key} onClick={() => {
               if (p.key === "studio-login") {
@@ -193,10 +187,10 @@ export default function App() {
               style={{ ...S.card, cursor:"pointer", textAlign:"left", border:"1px solid #242424", transition:"all .2s" }}
               onMouseEnter={e => { e.currentTarget.style.borderColor=p.color; e.currentTarget.style.transform="translateY(-4px)"; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor="#242424"; e.currentTarget.style.transform="translateY(0)"; }}>
-              <div style={{ fontSize:36, marginBottom:16 }}>{p.icon}</div>
+              <div style={{ fontSize:28, marginBottom:16, color:C.accent, fontFamily:"'Montserrat', sans-serif", fontWeight:300 }}>{p.icon}</div>
               <div style={{ fontSize:18, color:p.color, marginBottom:8 }}>{p.title}</div>
               <div style={{ fontSize:13, color:"#555", lineHeight:1.7 }}>{p.sub}</div>
-              <div style={{ marginTop:20, fontSize:11, color:p.color, letterSpacing:"0.15em" }}>ENTER →</div>
+              <div style={{ marginTop:20, fontSize:12, color:"#F27C20", letterSpacing:"0.1em", fontFamily:"'Montserrat', sans-serif" }}>Enter →</div>
             </button>
           ))}
         </div>
@@ -243,13 +237,13 @@ function LoginModal({ onClose, onLogin, notify }) {
     <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,.88)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:1000, padding:24 }}>
       <div style={{ ...S.card, width:"100%", maxWidth:420 }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:24 }}>
-          <div style={{ fontSize:18, color:"#c4713a" }}>{forgot?"Reset Password":"Studio Login"}</div>
+          <div style={{ fontSize:18, color:"#F27C20" }}>{forgot?"Reset Password":"Studio Login"}</div>
           <button onClick={onClose} style={{ background:"none", border:"none", color:"#555", fontSize:20, cursor:"pointer" }}>✕</button>
         </div>
         {resetSent ? (
           <div style={{ textAlign:"center", color:"#888", fontSize:14, lineHeight:1.7 }}>
             Please contact the competition admin to reset your password.<br/>
-            <button onClick={()=>{setForgot(false);setResetSent(false);}} style={{ ...S.ghost("#c4713a"), marginTop:16 }}>← Back to Login</button>
+            <button onClick={()=>{setForgot(false);setResetSent(false);}} style={{ ...S.ghost("#F27C20"), marginTop:16 }}>← Back to Login</button>
           </div>
         ) : (
           <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
@@ -269,7 +263,7 @@ function LoginModal({ onClose, onLogin, notify }) {
               </div>
             )}
             {pwError && <div style={{padding:"8px 12px",background:"#c0392b18",border:"1px solid #c0392b44",borderRadius:8,fontSize:13,color:"#e74c3c"}}>{pwError}</div>}
-            <button style={S.btn("#c4713a")} onClick={forgot?()=>setResetSent(true):handleLogin} disabled={loading}>
+            <button style={S.btn("#F27C20")} onClick={forgot?()=>setResetSent(true):handleLogin} disabled={loading}>
               {loading?<Spinner color="#0a0a0a"/>:forgot?"Send Reset Request":"Login →"}
             </button>
             <button onClick={()=>setForgot(!forgot)} style={{ background:"none", border:"none", color:"#555", fontSize:13, cursor:"pointer", fontFamily:"Georgia,serif" }}>
