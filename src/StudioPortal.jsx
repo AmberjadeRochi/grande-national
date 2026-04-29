@@ -259,6 +259,14 @@ function AddDancerModal({ session, onClose, onSave, notify, submissionsLocked })
       const { data: settings } = await supabase.from("app_settings").select("value").eq("key","submissions_locked").single();
       if (settings?.value === "true") { setError("Submissions are currently closed. Please contact the competition organiser."); return; }
     } catch(e) { /* continue */ }
+    // Rate limit check — max 50 uploads per hour per studio
+    const { data: allowed2 } = await supabase.rpc("check_rate_limit", {
+      p_identifier: session.studio_code,
+      p_action: "group_upload",
+      p_max_requests: 50,
+      p_window_minutes: 60
+    });
+    if (!allowed2) { setError("Too many uploads in a short time. Please wait a few minutes and try again."); return; }
     setLoading(true);
     try {
       const code = membershipCode(session.studio_code, form.first_name, form.last_name, form.date_of_birth);
@@ -480,6 +488,14 @@ function AddGroupModal({ dancers, session, onClose, onSave, notify, submissionsL
       const { data: settings } = await supabase.from("app_settings").select("value").eq("key","submissions_locked").single();
       if (settings?.value === "true") { setError("Submissions are currently closed. Please contact the competition organiser."); return; }
     } catch(e) { /* continue */ }
+    // Rate limit check — max 50 uploads per hour per studio
+    const { data: allowed2 } = await supabase.rpc("check_rate_limit", {
+      p_identifier: session.studio_code,
+      p_action: "group_upload",
+      p_max_requests: 50,
+      p_window_minutes: 60
+    });
+    if (!allowed2) { setError("Too many uploads in a short time. Please wait a few minutes and try again."); return; }
     setLoading(true);
     try {
       const path = `${session.studio_code}/groups/${form.group_name.replace(/\s/g,"_")}_${Date.now()}_${form.file.name}`;
