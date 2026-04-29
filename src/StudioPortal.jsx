@@ -247,6 +247,10 @@ function AddDancerModal({ session, onClose, onSave, notify }) {
 
   const save = async () => {
     if (!form.first_name.trim()||!form.last_name.trim()||!form.date_of_birth||!form.gender) { setError("All fields are required."); return; }
+    try {
+      const { data: settings } = await supabase.from("app_settings").select("value").eq("key","submissions_locked").single();
+      if (settings?.value === "true") { setError("Submissions are currently closed. Please contact the competition organiser."); return; }
+    } catch(e) { /* continue */ }
     setLoading(true);
     try {
       const code = membershipCode(session.studio_code, form.first_name, form.last_name, form.date_of_birth);
@@ -452,6 +456,10 @@ function AddGroupModal({ dancers, session, onClose, onSave, notify }) {
 
   const save = async () => {
     if (!form.group_name.trim()||!form.genre||!form.song_title.trim()||!form.age_group||selectedMembers.length<2||!form.file) { setError("All fields are required. Fill in group name, genre, song title, age group, select at least 2 dancers and upload music."); return; }
+    try {
+      const { data: settings } = await supabase.from("app_settings").select("value").eq("key","submissions_locked").single();
+      if (settings?.value === "true") { setError("Submissions are currently closed. Please contact the competition organiser."); return; }
+    } catch(e) { /* continue */ }
     setLoading(true);
     try {
       const path = `${session.studio_code}/groups/${form.group_name.replace(/\s/g,"_")}_${Date.now()}_${form.file.name}`;
