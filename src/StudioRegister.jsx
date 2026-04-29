@@ -67,6 +67,18 @@ export default function StudioRegister({ onBack, onSuccess, notify }) {
     if (!/[0-9!@#$%^&*]/.test(form.password)) { setError("Password must include at least one number or special character (e.g. ! @ # $ %)."); return; }
     setLoading(true);
     try {
+      // Rate limit check — max 5 studio registrations per hour
+      const { data: allowed } = await supabase.rpc("check_rate_limit", {
+        p_identifier: form.studio_email.toLowerCase(),
+        p_action: "studio_register",
+        p_max_requests: 5,
+        p_window_minutes: 60
+      });
+      if (!allowed) {
+        setError("Too many registration attempts. Please try again in an hour or contact the competition organiser.");
+        setLoading(false);
+        return;
+      }
       const { error } = await supabase.from("studios").insert({
         studio_name: form.studio_name.trim(),
         studio_code: form.studio_code.trim(),
