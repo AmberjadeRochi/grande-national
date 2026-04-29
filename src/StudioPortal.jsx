@@ -324,8 +324,10 @@ function AddSoloModal({ dancer: initialDancer, dancers, session, onClose, onSave
   const save = async () => {
     if (!dancer||!form.genre||!form.song_title.trim()||!form.file) { setError("All fields are required. Please select a dancer, genre, song title and upload a music file."); return; }
     // Check if submissions are locked
-    const { data: settings } = await supabase.from("app_settings").select("value").eq("key","submissions_locked").single().catch(()=>({data:null}));
-    if (settings?.value === "true") { setError("Submissions are currently closed. Please contact the competition organiser."); return; }
+    try {
+      const { data: settings } = await supabase.from("app_settings").select("value").eq("key","submissions_locked").single();
+      if (settings?.value === "true") { setError("Submissions are currently closed. Please contact the competition organiser."); return; }
+    } catch(e) { /* settings table not found, continue */ }
     setLoading(true);
     try {
       const path = `${session.studio_code}/solos/${dancer.id}_${form.genre}_${Date.now()}_${form.file.name}`;
